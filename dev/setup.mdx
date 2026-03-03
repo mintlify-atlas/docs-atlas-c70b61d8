@@ -1,0 +1,157 @@
+---
+title: Development environment setup
+description: Set up your local environment to develop ReUCM, including Flutter SDK, FVM, and workspace dependencies
+---
+
+## Prerequisites
+
+Before you begin developing ReUCM, ensure you have the following installed:
+
+- Git
+- [Flutter Version Management (FVM)](https://fvm.app/) for managing Flutter SDK versions
+- An IDE (VS Code or Android Studio recommended)
+- For Windows development: Windows 10 (1803) or higher with Microsoft Edge and WebView2
+
+## Flutter SDK requirements
+
+ReUCM uses a monorepo workspace structure with the following requirements:
+
+- **Dart SDK**: `^3.11.0`
+- **Flutter SDK**: `^3.29.3` (master channel)
+- **FVM**: Configured to use Flutter master channel
+
+<Note>
+The project uses FVM to lock the Flutter version to the master channel. This ensures all developers use the same Flutter version.
+</Note>
+
+## Setup instructions
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the ReUCM repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/BooksFine/re_ucm.git
+    cd re_ucm
+    ```
+  </Step>
+
+  <Step title="Install Flutter with FVM">
+    The project uses FVM with Flutter master channel. Install the required Flutter version:
+    
+    ```bash
+    fvm install master
+    fvm use master
+    ```
+    
+    This will read the `.fvmrc` configuration and set up the correct Flutter version.
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all workspace dependencies:
+    
+    ```bash
+    fvm flutter pub get
+    ```
+    
+    This command installs dependencies for all workspace packages:
+    - `re_ucm_app` - Main application
+    - `re_ucm_core` - Core models, interfaces, and UI components
+    - `re_ucm_lib` - Shared library code
+    - `re_ucm_author_today` - Author.Today portal module
+  </Step>
+
+  <Step title="Run code generation">
+    The project uses code generation for MobX, JSON serialization, and custom builders. Generate the required code:
+    
+    ```bash
+    dart run build_runner build -d --workspace
+    ```
+    
+    For continuous development, you can run the watcher:
+    
+    ```bash
+    dart run build_runner watch -d --workspace
+    ```
+  </Step>
+
+  <Step title="Verify your setup">
+    Run the app to verify everything is set up correctly:
+    
+    ```bash
+    cd re_ucm_app
+    fvm flutter run
+    ```
+    
+    Select your target device when prompted (Android, Windows, etc.)
+  </Step>
+</Steps>
+
+## Workspace structure
+
+ReUCM uses a monorepo workspace structure defined in the root `pubspec.yaml`:
+
+```yaml
+workspace:
+  - re_ucm_app
+  - re_ucm_author_today
+  - re_ucm_core
+  - re_ucm_lib
+```
+
+### Packages
+
+- **re_ucm_app** - Main Flutter application with UI and platform-specific code
+- **re_ucm_core** - Core models, interfaces, and shared UI components for portal modules
+- **re_ucm_lib** - Shared library code and utilities
+- **re_ucm_author_today** - Portal module for Author.Today resource support
+
+## Development tools
+
+### VS Code tasks
+
+If you're using VS Code, the repository includes pre-configured tasks:
+
+- **[Build Runner]** - Run code generation once
+- **build_runner watch** - Run code generation in watch mode (auto-runs on folder open)
+- **[Build] Split APK** - Build Android APK with ABI splits
+
+### Code generation
+
+The project uses several code generators:
+
+- **MobX** (`mobx_codegen`) - State management code generation
+- **JSON Serializable** (`json_serializable`) - JSON serialization
+- **Custom builders** - Changelog generation and other custom build tasks
+
+Generated files are placed in `.gen` directories to keep them organized.
+
+## Platform-specific setup
+
+### Android
+
+No additional setup required beyond the Flutter SDK.
+
+### Windows
+
+Windows development requires:
+
+- Windows 10 (1803) or higher
+- Microsoft Edge WebView2 (pre-installed on modern Windows)
+- Inno Setup (optional, for building installers)
+
+To build a Windows installer:
+
+```bash
+cd re_ucm_app
+make innoinstall  # Install Inno Setup
+make inno         # Build installer
+```
+
+## Next steps
+
+Now that your environment is set up, you can:
+
+- Read the [contributing guidelines](/dev/contributing) to understand the development workflow
+- Explore the codebase structure in `re_ucm_core` to understand the modular architecture
+- Start implementing a new portal module or contributing to existing features

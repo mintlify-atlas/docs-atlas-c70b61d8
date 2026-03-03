@@ -1,0 +1,228 @@
+---
+title: Architecture overview
+description: Comprehensive overview of ReUCM's architecture, including core concepts, data flow, and key components
+---
+
+ReUCM (ReUltimateCopyManager) is a cross-platform book downloader built with Flutter and Dart. The application follows a modular, layered architecture designed for extensibility and maintainability.
+
+## Core architectural principles
+
+### Modular portal system
+
+ReUCM is built around a **portal-based architecture** where each book source (like Author.Today) is implemented as an independent, pluggable module. This design allows:
+
+- Easy addition of new book sources without modifying core code
+- Clear separation between platform-specific logic and shared functionality
+- Independent development and testing of portal modules
+
+### Layer separation
+
+The architecture follows a clear layered approach:
+
+```
+┌─────────────────────────────────────────┐
+│      Presentation Layer (UI)            │
+│   (re_ucm_app/lib/features/)            │
+├─────────────────────────────────────────┤
+│      Business Logic Layer               │
+│   (Services, Controllers, MobX)         │
+├─────────────────────────────────────────┤
+│      Domain Layer                       │
+│   (Core Models & Interfaces)            │
+│   (re_ucm_core/)                        │
+├─────────────────────────────────────────┤
+│      Portal Implementation Layer        │
+│   (re_ucm_author_today/, etc.)          │
+└─────────────────────────────────────────┘
+```
+
+## Key components
+
+### Core models (re_ucm_core/)
+
+The core library defines fundamental interfaces and models:
+
+**Portal interface** - `re_ucm_core/lib/models/portal/portal.dart:3`
+```dart
+abstract interface class Portal<T extends PortalSettings> {
+  String get url;
+  String get name;
+  String get code;
+  PortalLogo get logo;
+  PortalService<T> get service;
+}
+```
+
+**PortalService interface** - `re_ucm_core/lib/models/portal/portal_service.dart:3`
+```dart
+abstract interface class PortalService<T extends PortalSettings> {
+  T settingsFromJson(Map<String, dynamic>? json);
+  List<PortalSettingItem> buildSettingsSchema(T settings);
+  bool isAuthorized(T settings);
+  String getIdFromUrl(Uri url);
+  Future<Book> getBookFromId(String id, {required T settings});
+  Future<List<Chapter>> getTextFromId(String id, {required T settings});
+}
+```
+
+**Book model** - `re_ucm_core/lib/models/book/book.dart:3`
+
+Contains metadata like title, authors, annotation, genres, series, chapters, and portal reference.
+
+**Chapter model** - `re_ucm_core/lib/models/book/chapter.dart:3`
+
+Simple structure containing chapter title and HTML content.
+
+### Shared services (re_ucm_lib/)
+
+Provides common services used across the application:
+
+**PortalFactory** - `re_ucm_lib/lib/portals/portal_factory.dart:3`
+- Registry for all portal implementations
+- Lookup by code or URL
+- Initialized at app startup in `re_ucm_app/lib/core/di.dart:32`
+
+**PortalSession** - `re_ucm_lib/lib/portals/portal_session.cg.dart:7`
+- MobX-powered reactive state management for portal instances
+- Manages settings, authorization state, and data fetching
+- Handles settings persistence
+
+**RecentBooksService** - `re_ucm_lib/lib/recent_books/recent_books_service.cg.dart:10`
+- Tracks recently accessed books
+- Observable list for reactive UI updates
+- Persisted to local storage using Sembast
+
+**SettingsService** - `re_ucm_lib/lib/settings/settings_service.dart:7`
+- Manages app-wide settings
+- Download path templates
+- Portal sessions and credentials
+- Persisted using Sembast database
+
+### Main application (re_ucm_app/)
+
+The Flutter application layer implementing the user interface and application logic.
+
+**Dependency injection** - `re_ucm_app/lib/core/di.dart:8`
+
+Uses Flutter's InheritedWidget pattern to provide services throughout the widget tree:
+```dart
+static Future<AppDependencies> init({required Widget child}) async {
+  PortalFactory.registerAll([AuthorToday()]);
+  
+  final otaService = await OTAService.init();
+  final dir = await getApplicationSupportDirectory();
+  final recentBooksService = await RecentBooksService.init(dir.path);
+  final settingsService = await SettingsService.init(dir.path);
+  
+  return AppDependencies(...);
+}
+```
+
+**Feature-based organization** - `re_ucm_app/lib/features/`
+
+Each feature is self-contained:
+- `book/` - Book viewing and downloading
+- `browser/` - In-app web browser for authentication
+- `converters/` - Format conversion (HTML to FB2)
+- `home/` - Main screen with portal list and recent books
+- `ota/` - Over-the-air updates
+- `portals/` - Portal configuration UI
+- `settings/` - App settings management
+- `share_receiver/` - Handle shared URLs from other apps
+
+## Data flow
+
+### Book download flow
+
+1. **URL parsing** - User shares a book URL to the app
+2. **Portal identification** - `PortalFactory.fromUrl()` identifies the correct portal
+3. **ID extraction** - Portal's `getIdFromUrl()` extracts book ID
+4. **Metadata fetch** - `PortalSession.getBook(id)` retrieves book metadata
+5. **User interaction** - Book details displayed, user initiates download
+6. **Content fetch** - `PortalSession.getText(id)` fetches all chapters
+7. **Conversion** - `convertToFB2()` converts HTML chapters to FB2 format (runs in isolate)
+8. **Image processing** - Downloads and embeds images in base64
+9. **Export** - User can share or save the generated FB2 file
+
+See `re_ucm_app/lib/features/book/presentation/book_page_controller.cg.dart:24` for the controller implementation.
+
+### Authentication flow
+
+1. **Portal settings** - User navigates to portal settings
+2. **Settings schema** - Portal generates dynamic UI via `buildSettingsSchema()`
+3. **Web auth** - Opens in-app browser to portal login page
+4. **Cookie extraction** - Captures authentication cookie on success
+5. **Token exchange** - Portal service exchanges cookie for API token
+6. **Persistence** - Settings service saves credentials to local database
+7. **Session update** - PortalSession updates with new authenticated state
+
+See `re_ucm_author_today/lib/author_today_service.dart:101` for the Author.Today implementation.
+
+## State management
+
+ReUCM uses **MobX** for reactive state management:
+
+- **PortalSession** - Observable settings and authorization state
+- **RecentBooksService** - Observable list of recent books
+- **BookPageController** - Observable download progress and book data
+
+The reactive nature ensures UI automatically updates when:
+- User authenticates with a portal
+- Book metadata is fetched
+- Download progress changes
+- Recent books list is modified
+
+## File conversion
+
+The conversion system (`re_ucm_app/lib/features/converters/fb2/converter.dart:18`) uses **Isolates** for heavy processing:
+
+1. Spawn isolate to avoid blocking UI
+2. Parse HTML chapters to FB2 XML elements
+3. Download images in parallel with progress tracking
+4. Build complete FB2 XML document
+5. Encode to UTF-8 bytes
+6. Send result back to main isolate
+
+Progress updates are sent via `SendPort` to update the UI in real-time.
+
+## Platform-specific considerations
+
+### Cross-platform support
+
+ReUCM targets:
+- Android
+- iOS
+- Windows (requires WebView2)
+- macOS
+- Linux
+
+### Storage strategy
+
+- **Sembast** - NoSQL database for settings and recent books
+- **path_provider** - Platform-appropriate storage locations
+- **File system** - Direct file operations for book exports
+
+### Permissions
+
+- External storage (Android) - `re_ucm_app/lib/features/book/presentation/book_page_controller.cg.dart:141`
+- Share capability - Platform-specific implementations via `share_plus`
+
+## Extension points
+
+The architecture provides clear extension points:
+
+### Adding new portals
+
+1. Create new package (e.g., `re_ucm_new_portal/`)
+2. Implement `Portal<T>` interface
+3. Implement `PortalService<T>` for business logic
+4. Define `T extends PortalSettings` for portal-specific settings
+5. Register in `re_ucm_app/lib/core/di.dart:32`
+
+### Adding new export formats
+
+Add converter in `re_ucm_app/lib/features/converters/` following the FB2 converter pattern.
+
+### Adding new features
+
+Create feature folder in `re_ucm_app/lib/features/` with presentation, domain, and data layers.

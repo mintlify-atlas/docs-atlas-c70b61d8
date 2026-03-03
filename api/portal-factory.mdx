@@ -1,0 +1,181 @@
+---
+title: PortalFactory
+description: Factory service for managing and accessing portal instances in the ReUCM library
+---
+
+The `PortalFactory` is a static service that manages portal registration and retrieval. It maintains a registry of all available portals and provides methods to access them by code or URL.
+
+## Properties
+
+<ResponseField name="portals" type="List<Portal>">
+  Returns a list of all registered portals.
+</ResponseField>
+
+## Methods
+
+### registerPortal
+
+Registers a single portal instance in the factory.
+
+```dart
+static void registerPortal(Portal portal)
+```
+
+<ParamField path="portal" type="Portal" required>
+  The portal instance to register. The portal will be indexed by both its URL and code.
+</ParamField>
+
+**Example:**
+
+```dart
+final myPortal = MyPortal();
+PortalFactory.registerPortal(myPortal);
+```
+
+### registerAll
+
+Registers multiple portals at once.
+
+```dart
+static void registerAll(List<Portal> portals)
+```
+
+<ParamField path="portals" type="List<Portal>" required>
+  A list of portal instances to register.
+</ParamField>
+
+**Example:**
+
+```dart
+PortalFactory.registerAll([
+  FlibustPortal(),
+  LitresPortal(),
+  BookRiverPortal(),
+]);
+```
+
+### fromCode
+
+Retrieves a portal by its unique code identifier.
+
+```dart
+static Portal fromCode(String code)
+```
+
+<ParamField path="code" type="String" required>
+  The unique code identifier of the portal.
+</ParamField>
+
+<ResponseField name="return" type="Portal">
+  The portal instance matching the provided code.
+</ResponseField>
+
+**Throws:** `ArgumentError` if no portal is found with the given code.
+
+**Example:**
+
+```dart
+try {
+  final portal = PortalFactory.fromCode('flibust');
+  print('Found portal: ${portal.url}');
+} catch (e) {
+  print('Portal not found: $e');
+}
+```
+
+### fromUrl
+
+Retrieves a portal by its URL origin.
+
+```dart
+static Portal fromUrl(Uri uri)
+```
+
+<ParamField path="uri" type="Uri" required>
+  The URI to match against registered portal URLs. Only the origin is used for matching.
+</ParamField>
+
+<ResponseField name="return" type="Portal">
+  The portal instance matching the provided URL origin.
+</ResponseField>
+
+**Throws:** `ArgumentError` if no portal is found with the given URL.
+
+**Example:**
+
+```dart
+try {
+  final uri = Uri.parse('https://flibusta.site/book/12345');
+  final portal = PortalFactory.fromUrl(uri);
+  print('Found portal: ${portal.code}');
+} catch (e) {
+  print('Portal not found: $e');
+}
+```
+
+### fromJson
+
+Deserializes a portal from JSON data.
+
+```dart
+static Portal fromJson(Map<String, dynamic> json)
+```
+
+<ParamField path="json" type="Map<String, dynamic>" required>
+  A JSON map containing a 'code' field that identifies the portal.
+</ParamField>
+
+<ResponseField name="return" type="Portal">
+  The portal instance identified by the code in the JSON data.
+</ResponseField>
+
+**Example:**
+
+```dart
+final json = {'code': 'flibust'};
+final portal = PortalFactory.fromJson(json);
+```
+
+### toJson
+
+Serializes a portal to JSON data.
+
+```dart
+static Map<String, dynamic> toJson(Portal portal)
+```
+
+<ParamField path="portal" type="Portal" required>
+  The portal instance to serialize.
+</ParamField>
+
+<ResponseField name="return" type="Map<String, dynamic>">
+  A JSON map containing the portal's code.
+</ResponseField>
+
+**Example:**
+
+```dart
+final portal = PortalFactory.fromCode('flibust');
+final json = PortalFactory.toJson(portal);
+// Returns: {'code': 'flibust'}
+```
+
+## Usage
+
+The `PortalFactory` maintains two internal registries:
+- By URL origin: Enables quick lookup when processing book URLs
+- By code: Enables lookup by portal identifier
+
+**Typical initialization:**
+
+```dart
+void initializePortals() {
+  PortalFactory.registerAll([
+    FlibustPortal(),
+    LitresPortal(),
+    BookRiverPortal(),
+  ]);
+  
+  print('Registered ${PortalFactory.portals.length} portals');
+}
+```

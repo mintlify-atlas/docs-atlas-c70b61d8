@@ -1,0 +1,274 @@
+---
+title: App settings and configuration
+description: Configure save locations, filename templates, portal authentication, and other ReUCM preferences
+---
+
+ReUCM provides comprehensive settings to customize your downloading experience, including save locations, filename templates, and portal-specific authentication.
+
+## Accessing settings
+
+You can open the settings dialog from multiple locations:
+
+- Tap the **settings icon** in the top-right corner of the home page
+- Tap the **settings icon** on any book page
+- Tap the **settings icon** in the browser
+
+The settings dialog appears as an overlay, allowing you to configure options without losing your current context.
+
+## Settings structure
+
+Settings are organized into two main categories:
+
+- **Portal settings**: Authentication and portal-specific configuration
+- **Global settings**: Save preferences and app-wide options
+
+### Navigating settings
+
+<Steps>
+  <Step title="Open settings dialog">
+    Tap the settings icon from anywhere in the app.
+  </Step>
+  
+  <Step title="Select a portal or global settings">
+    The main settings page shows cards for all supported portals. Tap a portal card to configure that portal, or use the buttons below for global settings.
+  </Step>
+  
+  <Step title="Configure options">
+    Each settings page provides relevant configuration options with immediate save.
+  </Step>
+  
+  <Step title="Navigate back">
+    Use the back arrow to return to the main settings page, or tap the X to close settings entirely.
+  </Step>
+</Steps>
+
+## Portal authentication
+
+Many book portals require authentication to access content. ReUCM provides flexible authentication options per portal.
+
+### Checking authentication status
+
+On the main settings page, portal cards display an indicator showing whether you're currently authenticated:
+
+- **Green indicator**: Successfully authenticated
+- **No indicator**: Not authenticated
+
+### Authentication methods
+
+When you tap a portal card, you'll see authentication options specific to that portal:
+
+#### Web-based authentication
+
+Some portals use web authentication:
+
+<Steps>
+  <Step title="Tap authentication button">
+    Tap the web authentication button for the portal.
+  </Step>
+  
+  <Step title="Log in through web page">
+    A web page opens where you can log in using your portal credentials.
+  </Step>
+  
+  <Step title="Complete authentication">
+    After logging in, the app extracts your session cookie and saves it.
+  </Step>
+  
+  <Step title="Confirmation">
+    A success message confirms you're authenticated.
+  </Step>
+</Steps>
+
+#### Credential-based authentication
+
+Other portals accept direct credentials:
+
+<Steps>
+  <Step title="Enter credentials">
+    Text fields appear for entering your username, password, or API tokens.
+  </Step>
+  
+  <Step title="Submit credentials">
+    Tap the submit icon or press enter to save your credentials.
+  </Step>
+  
+  <Step title="Verification">
+    The app validates your credentials with the portal.
+  </Step>
+</Steps>
+
+<Warning>
+Your credentials are stored locally on your device. ReUCM does not transmit credentials to any third parties other than the specific portal you're authenticating with.
+</Warning>
+
+### Logging out
+
+To log out from a portal:
+
+1. Open settings and tap the portal card
+2. Look for a logout or clear credentials button
+3. Tap the button to remove stored credentials
+
+Logging out also clears all cookies for that portal in the built-in browser.
+
+## Save settings
+
+Configure how and where books are saved to your device.
+
+### Accessing save settings
+
+From the main settings page:
+
+1. Ensure no portal is selected (tap the back arrow if needed)
+2. Tap the **Save settings** button
+
+### Save directory
+
+Choose a default directory for saving downloaded books:
+
+<Steps>
+  <Step title="Tap the save directory field">
+    The field shows your current save directory or is empty if none is configured.
+  </Step>
+  
+  <Step title="Select a directory">
+    A directory picker appears. Navigate to and select your preferred save location.
+  </Step>
+  
+  <Step title="Automatic saves">
+    Future downloads will automatically save to this directory when you tap the Save button.
+  </Step>
+</Steps>
+
+<Note>
+If you don't configure a save directory, a file picker appears each time you save a book, allowing you to choose the location manually.
+</Note>
+
+### Filename templates
+
+Customize how downloaded book files are named using placeholders:
+
+#### Template for series books
+
+Configure the filename pattern for books that are part of a series:
+
+**Available placeholders:**
+- `{series}`: Series name
+- `{series_number}`: Number in the series
+- `{name}`: Book title
+- `{authors}`: Author names
+- `{portal}`: Source portal name
+
+**Example template:**
+```
+{series}/{series_number} - {name}
+```
+
+**Result:**
+```
+The Foundation Series/1 - Foundation.fb2
+```
+
+#### Template for standalone books
+
+Configure the filename pattern for books not in a series:
+
+**Available placeholders:**
+- `{name}`: Book title
+- `{authors}`: Author names
+- `{portal}`: Source portal name
+
+**Example template:**
+```
+{authors}/{name}
+```
+
+**Result:**
+```
+Isaac Asimov/The Last Question.fb2
+```
+
+### Editing templates
+
+<Steps>
+  <Step title="Tap the edit icon">
+    Each template field has an edit icon on the right.
+  </Step>
+  
+  <Step title="Modify the template">
+    The field becomes editable, and placeholder buttons appear below.
+  </Step>
+  
+  <Step title="Insert placeholders">
+    Tap placeholder buttons to insert them at your cursor position, or type them manually.
+  </Step>
+  
+  <Step title="Save changes">
+    Tap the save icon to apply your new template.
+  </Step>
+</Steps>
+
+<Warning>
+Do not use illegal filename characters (< > : " | ? *) in your templates. The field will show an error if you include these characters.
+</Warning>
+
+### Authors separator
+
+When multiple authors are present, configure the separator character:
+
+- **Default**: Comma (,)
+- **Common alternatives**: Semicolon (;), ampersand (&), slash (/)
+
+**Example:**
+- With comma: `Author One, Author Two, Author Three`
+- With ampersand: `Author One & Author Two & Author Three`
+
+## Other settings
+
+### Change history
+
+Tap the **Change history** button to view the app's changelog, showing new features and fixes across versions.
+
+### Social links
+
+The settings page includes social media and project links for:
+
+- Providing feedback
+- Reporting issues
+- Following development updates
+- Contributing to the project
+
+## Tips for managing settings
+
+<Tip>
+Configure your save directory and filename templates once, and all future downloads will follow your preferences automatically.
+</Tip>
+
+<Tip>
+If you use multiple portals, configure authentication for each portal you use to avoid authorization errors when downloading.
+</Tip>
+
+<Note>
+Settings are preserved when you close and reopen the app. You only need to configure them once unless you want to make changes.
+</Note>
+
+## Troubleshooting
+
+### Authentication not working
+
+- Verify you're using correct credentials
+- Check if the portal's website is accessible
+- Try logging out and back in
+- Clear the app data and reconfigure
+
+### Save directory not working
+
+- Ensure you've granted storage permissions
+- Verify the directory still exists on your device
+- Try selecting a different directory
+
+### Filename template errors
+
+- Check for illegal characters
+- Ensure placeholders are spelled correctly with curly braces
+- Verify the template isn't empty

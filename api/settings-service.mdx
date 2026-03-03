@@ -1,0 +1,205 @@
+---
+title: SettingsService
+description: Service for managing application settings and portal sessions in ReUCM
+---
+
+The `SettingsService` manages application-wide settings including download paths, portal sessions, and user preferences. It uses persistent storage to maintain settings across app restarts.
+
+## Initialization
+
+### init
+
+Initializes the settings service with persistent storage.
+
+```dart
+static Future<SettingsService> init(String databaseDirectory)
+```
+
+<ParamField path="databaseDirectory" type="String" required>
+  The directory path where settings database files will be stored.
+</ParamField>
+
+<ResponseField name="return" type="Future<SettingsService>">
+  A fully initialized settings service instance with loaded settings.
+</ResponseField>
+
+**Example:**
+
+```dart
+final settingsService = await SettingsService.init('/path/to/database');
+```
+
+## Properties
+
+<ResponseField name="downloadPathTemplate" type="PathTemplate">
+  The template used to generate download paths for books. Supports variables like author name, title, series, etc.
+</ResponseField>
+
+<ResponseField name="authorsPathSeparator" type="String">
+  The separator string used when multiple authors are included in file paths (e.g., ", " or " & ").
+</ResponseField>
+
+<ResponseField name="saveDirectory" type="String?">
+  The base directory where books are saved. Can be null if not yet configured.
+</ResponseField>
+
+<ResponseField name="sessions" type="List<PortalSession>">
+  A list of all portal sessions, one for each registered portal. Each session maintains portal-specific settings and authentication state.
+</ResponseField>
+
+<ResponseField name="storage" type="SettingsStorage">
+  The underlying storage implementation used for persisting settings.
+</ResponseField>
+
+## Methods
+
+### loadSettings
+
+Loads all settings from persistent storage.
+
+```dart
+Future<void> loadSettings()
+```
+
+This method:
+1. Loads download path template
+2. Loads authors path separator
+3. Loads save directory
+4. Creates portal sessions for all registered portals with their saved settings
+
+**Example:**
+
+```dart
+await settingsService.loadSettings();
+print('Loaded ${settingsService.sessions.length} portal sessions');
+```
+
+### sessionByCode
+
+Retrieves a portal session by its portal code.
+
+```dart
+PortalSession sessionByCode(String code)
+```
+
+<ParamField path="code" type="String" required>
+  The unique code identifier of the portal.
+</ParamField>
+
+<ResponseField name="return" type="PortalSession">
+  The portal session for the specified portal.
+</ResponseField>
+
+**Throws:** `StateError` if no session exists for the given code.
+
+**Example:**
+
+```dart
+final flibustaSession = settingsService.sessionByCode('flibust');
+if (flibustaSession.isAuthenticated) {
+  print('User is logged in to Flibusta');
+}
+```
+
+### updateDownloadPathTemplate
+
+Updates the download path template and persists it to storage.
+
+```dart
+void updateDownloadPathTemplate(PathTemplate template)
+```
+
+<ParamField path="template" type="PathTemplate" required>
+  The new path template to use for generating download paths.
+</ParamField>
+
+**Example:**
+
+```dart
+final template = PathTemplate.parse('{author}/{series}/{title}');
+settingsService.updateDownloadPathTemplate(template);
+```
+
+### updateAuthorsPathSeparator
+
+Updates the authors path separator and persists it to storage.
+
+```dart
+void updateAuthorsPathSeparator(String separator)
+```
+
+<ParamField path="separator" type="String" required>
+  The separator to use between multiple author names in file paths.
+</ParamField>
+
+**Example:**
+
+```dart
+settingsService.updateAuthorsPathSeparator(' & ');
+// Results in paths like: "Author1 & Author2/Book Title.epub"
+```
+
+### updateSaveDirectory
+
+Updates the base save directory and persists it to storage.
+
+```dart
+void updateSaveDirectory(String? path)
+```
+
+<ParamField path="path" type="String?" required>
+  The new base directory path, or null to unset.
+</ParamField>
+
+**Example:**
+
+```dart
+settingsService.updateSaveDirectory('/home/user/Books');
+```
+
+## Usage
+
+**Complete initialization example:**
+
+```dart
+import 'package:re_ucm_lib/settings/settings_service.dart';
+import 'package:re_ucm_lib/portals/portal_factory.dart';
+
+Future<void> initializeApp() async {
+  // Register portals first
+  PortalFactory.registerAll([
+    FlibustPortal(),
+    LitresPortal(),
+  ]);
+  
+  // Initialize settings
+  final settings = await SettingsService.init('/path/to/database');
+  
+  // Configure download settings
+  settings.updateSaveDirectory('/home/user/Books');
+  settings.updateDownloadPathTemplate(
+    PathTemplate.parse('{author}/{title}')
+  );
+  settings.updateAuthorsPathSeparator(', ');
+  
+  // Access portal sessions
+  for (final session in settings.sessions) {
+    print('Portal: ${session.portal.code}');
+  }
+}
+```
+
+**Working with portal sessions:**
+
+```dart
+// Get a specific portal session
+final session = settingsService.sessionByCode('flibust');
+
+// Update portal-specific settings
+await session.updateSettings(newSettings);
+
+// Check authentication status
+if (!session.isAuthenticated) {
+  await session.login(username, password);
+}
+```

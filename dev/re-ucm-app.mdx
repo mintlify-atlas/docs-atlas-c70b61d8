@@ -1,0 +1,404 @@
+---
+title: re_ucm_app
+description: Main Flutter application for ReUCM book downloader with cross-platform support
+---
+
+## Overview
+
+The `re_ucm_app` is the main Flutter application that provides a cross-platform user interface for downloading books from various portals. It integrates `re_ucm_core` and `re_ucm_lib` to provide a complete book downloading experience.
+
+**Version:** 2.4.0+14321
+
+**Repository:** https://github.com/BooksFine/re_ucm
+
+**Homepage:** https://reucm.pages.dev
+
+## Architecture
+
+The application follows a feature-based architecture with clear separation of concerns:
+
+```
+re_ucm_app/
+├── core/              # Core infrastructure
+│   ├── constants.dart
+│   ├── di.dart        # Dependency injection
+│   ├── logger.dart
+│   ├── navigation/    # Navigation system
+│   └── ui/            # Theme and UI constants
+└── features/          # Feature modules
+    ├── book/          # Book detail and download
+    ├── browser/       # In-app browser
+    ├── changelog/     # App changelog
+    ├── common/        # Shared widgets
+    ├── converters/    # Format converters (FB2)
+    ├── home/          # Home screen
+    ├── ota/           # OTA updates
+    ├── portals/       # Portal selection
+    ├── recent_books/  # Recent books screen
+    ├── settings/      # Settings screen
+    └── share_receiver/ # Share intent handling
+```
+
+## Core infrastructure
+
+### Dependency injection
+
+The app uses `InheritedWidget` for dependency injection:
+
+```dart
+class AppDependencies extends InheritedWidget {
+  final OTAService otaService;
+  final RecentBooksService recentBooksService;
+  final SettingsService settingsService;
+  
+  static AppDependencies of(BuildContext context) {
+    final result = context
+        .dependOnInheritedWidgetOfExactType<AppDependencies>();
+    return result!;
+  }
+  
+  static Future<AppDependencies> init({required Widget child}) async {
+    // Register portals
+    PortalFactory.registerAll([AuthorToday()]);
+    
+    // Initialize services
+    final otaService = await OTAService.init();
+    final dir = await getApplicationSupportDirectory();
+    final recentBooksService = await RecentBooksService.init(dir.path);
+    final settingsService = await SettingsService.init(dir.path);
+    
+    return AppDependencies(
+      otaService: otaService,
+      recentBooksService: recentBooksService,
+      settingsService: settingsService,
+      child: child,
+    );
+  }
+}
+```
+
+**Usage in widgets:**
+
+```dart
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final deps = AppDependencies.of(context);
+    final settings = deps.settingsService;
+    // Use services...
+  }
+}
+```
+
+### Navigation
+
+The app uses `go_router` for declarative routing with support for:
+
+- Deep linking
+- Dialog pages
+- Modal bottom sheets
+- Predictive back gestures
+- Custom page transitions
+
+Navigation is configured in `core/navigation/router.dart`.
+
+### Theming
+
+The app provides both light and dark themes with Material Design 3 styling. Themes are defined in `core/ui/theme.dart`.
+
+### Logging
+
+Structured logging is initialized at app startup:
+
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await loggerInit();
+  
+  final app = await AppDependencies.init(child: const MainApp());
+  runApp(app);
+}
+```
+
+## Features
+
+### Book detail and download
+
+The book feature (`features/book/`) handles displaying book information and managing downloads.
+
+**BookPageController** manages book state with MobX:
+
+```dart
+class BookPageController {
+  final String id;
+  final PortalSession session;
+  final SettingsService settings;
+  final RecentBooksService recentBooksService;
+  
+  @observable
+  late ObservableFuture<Book> book;
+  
+  @observable
+  bool isDownloading = false;
+  
+  @observable
+  Progress progress = Progress(stage: Stages.none);
+  
+  @action
+  void fetch() => book = ObservableFuture(_fetch());
+  
+  // Download book to file
+  Future<void> download() async {
+    isDownloading = true;
+    final bookData = await session.getBook(id);
+    final chapters = await session.getText(id);
+    
+    // Convert to FB2 format
+    final fb2Bytes = await FB2Converter.convert(
+      book: bookData,
+      chapters: chapters,
+      onProgress: (p) => progress = p,
+    );
+    
+    // Save to file
+    await _saveFile(fb2Bytes);
+    isDownloading = false;
+  }
+}
+```
+
+**Key components:**
+
+- `book_page.dart` - Main book detail screen
+- `book_page_controller.cg.dart` - MobX controller for book state
+- `widgets/book_header.dart` - Book metadata display
+- `widgets/book_actions_bar.dart` - Download and share actions
+- `widgets/progress_bar.dart` - Download progress indicator
+
+### Format converters
+
+The app includes converters for transforming book content into various formats.
+
+**FB2 Converter** (`features/converters/fb2/converter.dart`):
+
+```dart
+class FB2Converter {
+  static Future<Uint8List> convert({
+    required Book book,
+    required List<Chapter> chapters,
+    required Function(Progress) onProgress,
+  }) async {
+    onProgress(Progress(stage: Stages.downloading));
+    
+    // Download cover image
+    final coverData = await _downloadCover(book.coverUrl);
+    
+    onProgress(Progress(stage: Stages.building));
+    
+    // Build FB2 XML structure
+    final fb2Content = _buildFB2(
+      book: book,
+      chapters: chapters,
+      cover: coverData,
+    );
+    
+    onProgress(Progress(stage: Stages.ziping));
+    
+    // Compress to ZIP
+    final zipBytes = await _createZip(fb2Content);
+    
+    onProgress(Progress(stage: Stages.done));
+    return zipBytes;
+  }
+}
+```
+
+The converter handles:
+
+- HTML to FB2 conversion
+- HTML entity replacement
+- Cover image embedding
+- ZIP compression
+- Progress reporting
+
+### Recent books
+
+Displays recently viewed books with the ability to quickly reopen them.
+
+```dart
+class RecentBooksPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final service = AppDependencies.of(context).recentBooksService;
+    
+    return Observer(
+      builder: (_) {
+        final books = service.recentBooks;
+        return ListView.builder(
+          itemCount: books.length,
+          itemBuilder: (context, index) {
+            final book = books[index];
+            return BookCard(
+              book: book,
+              onTap: () => Nav.toBook(
+                portalCode: book.portal.code,
+                bookId: book.id,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+### Settings
+
+Provides UI for configuring:
+
+- Download path templates
+- Save directory
+- Portal authentication
+- App preferences
+
+### Share receiver
+
+Handles incoming share intents from other apps:
+
+```dart
+void shareHandler(BuildContext context) {
+  ShareHandlerPlatform.instance.getInitialSharedMedia().then((media) {
+    if (media != null) {
+      _handleSharedUrl(context, media);
+    }
+  });
+  
+  ShareHandlerPlatform.instance.sharedMediaStream.listen((media) {
+    _handleSharedUrl(context, media);
+  });
+}
+
+void _handleSharedUrl(BuildContext context, SharedMedia media) {
+  final url = Uri.tryParse(media.content ?? '');
+  if (url != null) {
+    try {
+      final portal = PortalFactory.fromUrl(url);
+      final bookId = portal.service.getIdFromUrl(url);
+      Nav.toBook(portalCode: portal.code, bookId: bookId);
+    } catch (e) {
+      // Show error
+    }
+  }
+}
+```
+
+### OTA updates
+
+Manages over-the-air application updates:
+
+```dart
+class OTAService {
+  static Future<OTAService> init() async {
+    // Initialize update service
+  }
+  
+  static void firstLaunch(OTAService service) {
+    // Check for updates on first launch
+  }
+  
+  Future<void> checkForUpdates() async {
+    // Check GitHub releases or update server
+  }
+  
+  Future<void> downloadAndInstall(UpdateInfo info) async {
+    // Download and install update
+  }
+}
+```
+
+### In-app browser
+
+Provides a WebView for portal authentication flows that require web-based login.
+
+## Dependencies
+
+### Key Flutter packages
+
+- `flutter_mobx` - Reactive state management
+- `go_router` - Declarative routing
+- `cached_network_image` - Image caching
+- `shimmer` - Loading skeletons
+- `loading_animation_widget` - Loading indicators
+- `share_plus` - Share functionality
+- `url_launcher` - Open external URLs
+- `file_picker` - File system access
+- `path_provider` - Platform directories
+
+### Book processing
+
+- `xml` - XML parsing and generation
+- `html` - HTML parsing
+- `simple_html_css` - HTML rendering
+- `dio` - HTTP client
+
+### Platform integration
+
+- `flutter_inappwebview` - WebView component
+- `share_handler` - Share intent receiver
+- `permission_handler` - Runtime permissions
+- `ota_update_fork` - OTA updates
+
+## Main application flow
+
+1. **App initialization** (`main.dart`)
+   - Initialize logger
+   - Set up system UI (edge-to-edge)
+   - Initialize dependencies (services, portals)
+   - Set up share handler
+   - Check for OTA updates
+
+2. **Portal registration** (`core/di.dart`)
+   - Register all available portals with `PortalFactory`
+   - Currently includes: Author.Today
+
+3. **Service initialization**
+   - Initialize `SettingsService` with app support directory
+   - Initialize `RecentBooksService` with app support directory
+   - Initialize `OTAService`
+
+4. **Routing setup**
+   - Configure routes for all features
+   - Set up deep linking
+   - Handle initial route from share intent
+
+5. **Theme application**
+   - Apply dark/light theme based on system preference
+   - Configure Material Design 3 components
+
+## Building and running
+
+```bash
+# Get dependencies
+flutter pub get
+
+# Run code generation
+flutter pub run build_runner build
+
+# Run on device
+flutter run
+
+# Build for production
+flutter build apk --release
+flutter build ios --release
+```
+
+## Code generation
+
+The app uses code generation for:
+
+- **MobX** - `*.cg.dart` files with `_$` mixins
+- **JSON serialization** - `fromJson`/`toJson` methods
+- **Freezed** - Immutable data classes
+
+Run `flutter pub run build_runner build` after modifying annotated classes.

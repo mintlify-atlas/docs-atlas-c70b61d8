@@ -1,80 +1,246 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick start guide
+description: Download your first book with ReUCM in minutes - from installation to book export
 ---
 
-## Get started in three steps
+# Quick start guide
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through downloading your first book using ReUCM, from initial setup to exporting the final FB2 file.
 
-### Step 1: Set up your local environment
+<Info>
+  Before starting, make sure you have ReUCM installed. See the [installation guide](/installation) if you haven't installed it yet.
+</Info>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+## Download your first book
+
+<Steps>
+  <Step title="Launch ReUCM">
+    Open ReUCM on your device. You'll see the main screen with:
+    - List of supported portals (book resources)
+    - Recent books section (empty on first launch)
+    - Settings and update buttons in the app bar
+  </Step>
+
+  <Step title="Choose your method">
+    There are two ways to open a book in ReUCM:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    **Method 1: Using the built-in browser**
+    1. Tap on a portal card (e.g., "Author.Today")
+    2. The built-in browser will open
+    3. Navigate to the book you want to download
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    **Method 2: Share menu (Android only)**
+    1. Open your browser and navigate to a book page
+    2. Tap the Share button
+    3. Select "ReUCM" from the share menu
+    4. ReUCM will automatically detect and open the book
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    **Method 3: Direct link**
+    1. Copy the book URL from your browser
+    2. In ReUCM, look for the link input field
+    3. Paste the URL and open
+    
+    <Note>
+      The share menu method is the quickest way to open books on Android devices.
+    </Note>
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Authenticate (if required)">
+    If the book requires authentication:
+    
+    1. The built-in browser will display the portal's login page
+    2. Sign in with your credentials (username/password or social login)
+    3. Your session is saved locally on your device
+    
+    <Warning>
+      All authentication happens on your device. ReUCM never sends your credentials to external servers.
+    </Warning>
+    
+    For Author.Today, you can also authenticate using a token:
+    1. Go to Settings → Portal Settings → Author.Today
+    2. Enter your authentication token
+    3. Save settings
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="View book details">
+    Once the book is loaded, you'll see:
+    - Book cover and title
+    - Author name(s)
+    - Book annotation/description
+    - Series information (if applicable)
+    - Available chapters
+    
+    <Info>
+      The book details page adapts to your screen size - it has different layouts for portrait/landscape and desktop views.
+    </Info>
+  </Step>
 
-### Step 3: Go live
+  <Step title="Configure save settings (optional)">
+    Before downloading, you can customize the save settings:
+    
+    1. Tap the Settings icon
+    2. Navigate to "Save Settings"
+    3. Configure:
+       - **Save directory** - Where books are saved (Windows only)
+       - **Filename template** - How downloaded files are named
+       - **Author separator** - Character between multiple authors
+       - **Tag placeholders** - Use variables like `{title}`, `{author}`, `{series}`
+    
+    Default filename template: `{author} - {title}`
+    
+    <Note>
+      On Android, books are saved to your device's Downloads folder by default.
+    </Note>
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Download the book">
+    1. Tap the "Download" button on the book page
+    2. ReUCM will:
+       - Fetch all available chapters
+       - Convert content to FB2 format
+       - Include metadata (title, author, series, cover)
+       - Save the file to your configured location
+    3. You'll see a progress indicator showing:
+       - Current chapter being downloaded
+       - Total chapters
+       - Download percentage
+    
+    <Info>
+      Download speed depends on the portal's server and the number of chapters in the book.
+    </Info>
+  </Step>
+
+  <Step title="Access your downloaded book">
+    After download completes:
+    
+    **Windows:**
+    - Books are saved to your configured save directory
+    - Default location shown in Settings → Save Settings
+    
+    **Android:**
+    - Books are saved to the Downloads folder
+    - Access via Files app or any file manager
+    - You can share the book directly from the completion notification
+    
+    The file format is **FB2** (FictionBook 2.0), compatible with most e-readers and reader apps.
+  </Step>
+</Steps>
+
+## Using the share menu (Android)
+
+The share menu integration is one of ReUCM's most convenient features:
+
+<Steps>
+  <Step title="Navigate to a book page">
+    Open your browser and go to any supported book resource (e.g., author.today/work/12345)
+  </Step>
+
+  <Step title="Share the page">
+    Tap your browser's Share button (usually in the menu or address bar)
+  </Step>
+
+  <Step title="Select ReUCM">
+    From the share sheet, select "ReUCM"
+  </Step>
+
+  <Step title="Book opens automatically">
+    ReUCM will:
+    - Extract the book ID from the URL
+    - Identify the correct portal
+    - Open the book details page immediately
+  </Step>
+</Steps>
+
+<Warning>
+  If you see an error message "Failed to open the book", ensure:
+  - The URL is from a supported portal
+  - The URL points to a valid book page (not homepage or search results)
+  - You have an internet connection
+</Warning>
+
+## Recent books
+
+ReUCM automatically tracks your recently viewed books:
+
+- Recent books appear on the main screen
+- Tap any recent book to open it again
+- Swipe to delete books from recent history
+- Recent books include cover, title, author, and portal information
+
+<Note>
+  Recent books list is stored locally and persists between app launches.
+</Note>
+
+## OTA updates
+
+ReUCM includes automatic update checking:
+
+1. When a new version is available, you'll see a bottom sheet notification
+2. View the changelog to see what's new
+3. Tap "Update" to download and install
+4. On first launch after update, the full changelog is displayed
+
+<Info>
+  Updates are downloaded directly from GitHub Releases without requiring app store approval.
+</Info>
+
+## Tips and best practices
+
+### For best results
+
+- **Authenticate before downloading** - Log in to the portal first to access your purchased books
+- **Check book status** - Ensure the book is available and not region-locked
+- **Use share menu** - On Android, sharing from the browser is faster than copying URLs
+- **Customize filenames** - Set up a filename template that works with your e-reader's library organization
+
+### Troubleshooting common issues
+
+**Book won't load:**
+- Verify you're logged in (check with the built-in browser)
+- Ensure the book URL is correct and accessible
+- Try refreshing the page in the built-in browser
+
+**Download fails:**
+- Check your internet connection
+- Verify you have storage permission (Android)
+- Ensure the book isn't DRM-protected beyond ReUCM's capabilities
+- Try downloading individual chapters to identify problematic sections
+
+**Missing chapters:**
+- Some portals may restrict certain chapters
+- Verify all chapters are visible in the built-in browser
+- Check if you need a premium account for full access
+
+**Unauthorized error:**
+- You'll see an alert if authentication is required
+- Tap "Open in browser" to log in
+- After login, return to the book page and try again
+
+### File format information
+
+ReUCM exports books in **FB2 format** with:
+
+- Complete book metadata (title, author, series, ISBN if available)
+- Cover image embedded
+- Proper chapter structure
+- Series information and sequence number
+- Author information with links
+
+FB2 files can be read with:
+- **Android:** FBReader, Moon+ Reader, PocketBook
+- **iOS:** FBReader, KyBook 3
+- **Windows:** Calibre, FBReader, ICE Book Reader
+- **E-readers:** Most modern e-readers with Calibre conversion
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you've downloaded your first book:
 
-<CardGroup cols={2}>
+- Explore the [development guide](/development) to understand ReUCM's architecture
+- Check the [GitHub repository](https://github.com/BooksFine/re_ucm) for source code
+- Join the [BooksFine Telegram channel](https://t.me/BookFine) for updates and community support
+- Consider contributing new portal modules for additional book resources
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+<Info>
+  ReUCM is open source and welcomes contributions. See the repository for information on adding new resource modules.
+</Info>

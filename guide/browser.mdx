@@ -1,0 +1,137 @@
+---
+title: Using the built-in browser
+description: Browse supported book portals directly within ReUCM using the integrated web browser
+---
+
+ReUCM includes a built-in browser that lets you navigate supported book portals without leaving the app. The browser automatically detects book pages and seamlessly transitions to the download interface.
+
+## Opening the browser
+
+<Steps>
+  <Step title="Navigate to home page">
+    Open ReUCM and view the home page.
+  </Step>
+  
+  <Step title="Select a portal">
+    In the **Browser** section, you'll see cards for all supported portals. Tap on any portal card to open that portal's website in the built-in browser.
+  </Step>
+  
+  <Step title="Browse the portal">
+    The browser will load the portal's homepage, and you can navigate the site normally.
+  </Step>
+</Steps>
+
+## Browser features
+
+The built-in browser provides essential navigation controls:
+
+### Navigation controls
+
+A floating action button at the bottom of the screen contains navigation arrows:
+
+- **Back arrow**: Navigate to the previous page in your browsing history
+- **Forward arrow**: Move forward in your browsing history (after going back)
+
+<Note>
+Navigation buttons are automatically enabled or disabled based on your browsing history. You can't go back if you're on the first page, and you can't go forward unless you've gone back first.
+</Note>
+
+### System back button
+
+The Android system back button integrates with browser history:
+
+- If you can go back in the browser, pressing the system back button navigates to the previous page
+- If you're on the first page of your browsing session, the system back button closes the browser and returns to the home page
+
+### App bar actions
+
+- **Back button**: Returns to the home page immediately, regardless of browser history
+- **Settings icon**: Opens the settings dialog to configure app preferences
+
+## Automatic book detection
+
+The browser continuously monitors the URLs you visit. When you navigate to a book page:
+
+<Steps>
+  <Step title="Book URL detected">
+    The browser identifies that you're viewing a book page based on the URL pattern.
+  </Step>
+  
+  <Step title="Automatic transition">
+    The browser automatically extracts the book ID from the URL and navigates to ReUCM's book download page.
+  </Step>
+  
+  <Step title="View book details">
+    You'll see the book's metadata and download options without any additional steps.
+  </Step>
+</Steps>
+
+<Tip>
+This automatic detection works both when clicking links and when pages update their URLs during navigation.
+</Tip>
+
+## Browser behavior
+
+### User agent
+
+The browser uses a mobile Chrome user agent string to ensure compatibility with mobile versions of book portals:
+
+```
+Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36
+```
+
+This ensures you get the mobile-optimized version of portal websites.
+
+### Permissions
+
+The browser automatically grants permission requests from websites, ensuring smooth browsing without interruption from permission dialogs.
+
+### Cookies and sessions
+
+The browser maintains cookies and session data during your browsing session. However, if you log out from a portal in the settings:
+
+- All cookies for that portal are cleared
+- You'll need to log in again if the portal requires authentication
+
+## Use cases
+
+### Discovering new books
+
+Use the browser to:
+
+- Browse portal catalogs and categories
+- Search for specific books or authors
+- Read reviews and ratings
+- Check book series and recommendations
+
+### When you don't have a direct link
+
+If you don't have a book URL to paste on the home page, the browser lets you:
+
+- Navigate through the portal's interface naturally
+- Use the portal's search and filtering features
+- Explore featured or trending books
+
+### Multi-step navigation
+
+Some portals require multiple steps to reach a book:
+
+1. Select a genre or category
+2. Filter by author or series
+3. Choose a specific book
+
+The browser handles all these steps seamlessly, automatically detecting when you finally reach a book page.
+
+## Tips for effective browsing
+
+<Tip>
+If a portal requires authentication, configure your credentials in the [settings](/guide/settings#portal-authentication) before browsing. This ensures you can access protected content.
+</Tip>
+
+<Note>
+The browser is optimized for supported portals. While you can technically navigate to any website, automatic book detection only works with supported book portals.
+</Note>
+
+<Warning>
+Cookie management is tied to portal authentication settings. Clearing your authentication credentials in settings will also clear the browser's cookies for that portal.
+</Warning>

@@ -1,0 +1,375 @@
+---
+title: Creating a new portal
+description: Step-by-step guide to implementing a new book source portal for ReUCM
+---
+
+This guide walks you through creating a new portal module to add support for a new book source in ReUCM.
+
+## Overview
+
+ReUCM uses a modular portal system where each book source is implemented as a separate package that implements the `Portal` and `PortalService` interfaces from `re_ucm_core`.
+
+## Prerequisites
+
+Before creating a new portal, you should:
+
+- Understand the [portal system architecture](/dev/portal-system)
+- Review the `Portal` and `PortalService` [interfaces](/dev/portal-interface)
+- Study the [Author.Today implementation](https://github.com/BooksFine/re_ucm/tree/main/re_ucm_author_today) as a reference
+
+## Step-by-step guide
+
+<Steps>
+  <Step title="Create a new package">
+    Create a new directory in the monorepo root:
+
+    ```bash
+    mkdir re_ucm_your_portal_name
+    cd re_ucm_your_portal_name
+    ```
+
+    Create a `pubspec.yaml` file:
+
+    ```yaml
+    name: re_ucm_your_portal_name
+    description: "YourPortal support for ReUCM"
+    version: 1.0.0
+    publish_to: none
+
+    environment:
+      sdk: ^3.11.0
+
+    resolution: workspace
+
+    dependencies:
+      re_ucm_core: ^1.8.0
+      dio: ^5.6.0  # For HTTP requests
+      # Add other dependencies as needed
+    ```
+
+    Add your package to the workspace in the root `pubspec.yaml`:
+
+    ```yaml
+    workspace:
+      - re_ucm_app
+      - re_ucm_author_today
+      - re_ucm_core
+      - re_ucm_lib
+      - re_ucm_your_portal_name  # Add this line
+    ```
+  </Step>
+
+  <Step title="Implement the Portal interface">
+    Create `lib/your_portal.dart`:
+
+    ```dart
+    import 'package:re_ucm_core/models/portal.dart';
+    import 'your_portal_service.dart';
+    import 'models/your_settings.dart';
+
+    class YourPortal implements Portal<YourSettings> {
+      late final PortalService<YourSettings> _service = YourPortalService(this);
+
+      @override
+      String get code => 'your_portal';
+
+      @override
+      String get name => 'Your Portal Name';
+
+      @override
+      String get url => 'https://yourportal.com';
+
+      @override
+      PortalLogo get logo => PortalLogo(
+        assetPath: 'assets/logo.svg',
+        packageName: 're_ucm_your_portal_name',
+      );
+
+      @override
+      PortalService<YourSettings> get service => _service;
+    }
+    ```
+
+    <Note>
+    The `code` property must be unique across all portals and is used for portal identification and registration.
+    </Note>
+  </Step>
+
+  <Step title="Create settings model">
+    Create `lib/models/your_settings.dart`:
+
+    ```dart
+    import 'package:json_annotation/json_annotation.dart';
+    import 'package:re_ucm_core/models/portal.dart';
+
+    part 'your_settings.g.dart';
+
+    @JsonSerializable()
+    class YourSettings extends PortalSettings {
+      final String? token;
+      final String? userId;
+
+      YourSettings({this.token, this.userId});
+
+      factory YourSettings.fromJson(Map<String, dynamic> json) =>
+          _$YourSettingsFromJson(json);
+
+      @override
+      Map<String, dynamic> toJson() => _$YourSettingsToJson(this);
+
+      YourSettings copyWith({String? token, String? userId}) {
+        return YourSettings(
+          token: token ?? this.token,
+          userId: userId ?? this.userId,
+        );
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Implement the PortalService interface">
+    Create `lib/your_portal_service.dart`:
+
+    ```dart
+    import 'package:re_ucm_core/models/book.dart';
+    import 'package:re_ucm_core/models/portal.dart';
+    import 'models/your_settings.dart';
+
+    class YourPortalService implements PortalService<YourSettings> {
+      final Portal portal;
+
+      YourPortalService(this.portal);
+
+      @override
+      void Function(YourSettings updatedSettings)? onSettingsChanged;
+
+      @override
+      YourSettings settingsFromJson(Map<String, dynamic>? json) =>
+          json == null ? YourSettings() : YourSettings.fromJson(json);
+
+      @override
+      List<PortalSettingItem> buildSettingsSchema(YourSettings settings) {
+        return [
+          const PortalSettingSectionTitle('Your Portal'),
+          PortalSettingWebAuthButton(
+            actionId: 'login_by_web',
+            title: 'Sign in via web',
+            startUrl: 'https://yourportal.com/login',
+            successUrl: 'https://yourportal.com/',
+            cookieName: 'session_cookie',
+            onCookieObtained: (s, cookie) => _loginByCookie(s as YourSettings, cookie),
+          ),
+        ];
+      }
+
+      @override
+      bool isAuthorized(YourSettings settings) => settings.token != null;
+
+      @override
+      String getIdFromUrl(Uri url) {
+        // Parse the book ID from the URL
+        // Example: https://yourportal.com/book/12345 -> "12345"
+        if (url.host != 'yourportal.com' || url.pathSegments.length != 2) {
+          throw ArgumentError('Invalid link');
+        }
+        return url.pathSegments[1];
+      }
+
+      @override
+      Future<Book> getBookFromId(String id, {required YourSettings settings}) async {
+        // Implement API call to fetch book metadata
+        // Return a Book object with all metadata
+        throw UnimplementedError();
+      }
+
+      @override
+      Future<List<Chapter>> getTextFromId(String id, {required YourSettings settings}) async {
+        // Implement API call to fetch book chapters
+        // Return a list of Chapter objects
+        throw UnimplementedError();
+      }
+
+      Future<YourSettings> _loginByCookie(YourSettings settings, String cookie) async {
+        // Exchange cookie for auth token
+        // Return updated settings with token
+        throw UnimplementedError();
+      }
+    }
+    ```
+
+    <Info>
+    The `onSettingsChanged` callback allows you to notify the app when settings change (e.g., token refresh).
+    </Info>
+  </Step>
+
+  <Step title="Implement API client">
+    Create an API client to communicate with the portal's backend. Use Dio for HTTP requests:
+
+    ```dart
+    import 'package:dio/dio.dart';
+
+    class YourPortalAPI {
+      final Dio _dio;
+
+      YourPortalAPI({String? token}) : _dio = Dio() {
+        _dio.options.baseUrl = 'https://api.yourportal.com';
+        if (token != null) {
+          _dio.options.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+
+      Future<Response> getBookMetadata(String id) async {
+        return await _dio.get('/books/$id');
+      }
+
+      Future<Response> getBookChapters(String id) async {
+        return await _dio.get('/books/$id/chapters');
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Add logo asset">
+    Add your portal's logo to `assets/logo.svg` (or `.png`) in your package directory.
+
+    Update `pubspec.yaml` to include the asset:
+
+    ```yaml
+    flutter:
+      assets:
+        - assets/logo.svg
+    ```
+  </Step>
+
+  <Step title="Register the portal">
+    In the main app, register your portal in `re_ucm_app/lib/core/di.dart`:
+
+    ```dart
+    import 'package:re_ucm_your_portal_name/your_portal.dart';
+
+    static Future<AppDependencies> init({required Widget child}) async {
+      PortalFactory.registerAll([
+        AuthorToday(),
+        YourPortal(),  // Add this line
+      ]);
+      // ...
+    }
+    ```
+
+    Add the dependency to `re_ucm_app/pubspec.yaml`:
+
+    ```yaml
+    dependencies:
+      re_ucm_your_portal_name: ^1.0.0
+    ```
+  </Step>
+
+  <Step title="Run code generation">
+    If you used `json_serializable` or other code generation packages:
+
+    ```bash
+    flutter pub run build_runner build --delete-conflicting-outputs
+    ```
+  </Step>
+
+  <Step title="Test your portal">
+    Build and run the app:
+
+    ```bash
+    cd re_ucm_app
+    flutter run
+    ```
+
+    Test the following:
+    - Portal appears in settings
+    - Authentication flow works
+    - Book URL is correctly parsed
+    - Book metadata is fetched correctly
+    - Chapters are downloaded and displayed
+    - Books can be saved to FB2 format
+  </Step>
+</Steps>
+
+## Best practices
+
+### Error handling
+
+Handle network errors gracefully:
+
+```dart
+try {
+  final response = await api.getBookMetadata(id);
+  return parseBookMetadata(response.data);
+} on DioException catch (e) {
+  if (e.response?.statusCode == 401) {
+    throw Exception('Authentication required');
+  } else if (e.response?.statusCode == 404) {
+    throw Exception('Book not found');
+  }
+  throw Exception('Network error: ${e.message}');
+}
+```
+
+### Token refresh
+
+If your portal uses tokens that expire, implement automatic refresh:
+
+```dart
+Future<String?> _refreshToken(YourSettings settings) async {
+  try {
+    final response = await api.refreshToken(settings.token);
+    final newToken = response.data['token'];
+    if (newToken != null) {
+      onSettingsChanged?.call(settings.copyWith(token: newToken));
+      return newToken;
+    }
+  } catch (e) {
+    logger.e('Token refresh failed', error: e);
+  }
+  return null;
+}
+```
+
+### Content parsing
+
+If the portal returns HTML content, you may need to parse it:
+
+```dart
+import 'package:html/parser.dart' as html;
+
+String cleanHtml(String htmlContent) {
+  final document = html.parse(htmlContent);
+  // Remove unwanted elements
+  document.querySelectorAll('script, style').forEach((e) => e.remove());
+  return document.body?.innerHtml ?? '';
+}
+```
+
+## Common issues
+
+<Accordion title="Portal doesn't appear in the app">
+  Make sure you:
+  - Added the portal to `PortalFactory.registerAll()` in `di.dart`
+  - Added the package dependency to `re_ucm_app/pubspec.yaml`
+  - Ran `flutter pub get` after adding the dependency
+</Accordion>
+
+<Accordion title="Authentication fails">
+  Check:
+  - The `startUrl` and `successUrl` in your WebAuthButton are correct
+  - The `cookieName` matches what the portal sets
+  - Your `_loginByCookie` method correctly exchanges the cookie for a token
+</Accordion>
+
+<Accordion title="Book metadata parsing fails">
+  - Log the raw API response to understand the structure
+  - Ensure your model classes match the API response format
+  - Handle optional fields with nullable types
+</Accordion>
+
+## Next steps
+
+- Review the [Portal interface documentation](/dev/portal-interface)
+- Study the [Author.Today implementation](https://github.com/BooksFine/re_ucm/tree/main/re_ucm_author_today)
+- Learn about [FB2 converters](/dev/converters)
+- Submit a pull request to add your portal to ReUCM

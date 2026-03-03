@@ -1,0 +1,93 @@
+---
+title: Portal
+description: Interface defining a content source portal in the ReUCM system
+---
+
+The `Portal` interface represents a content source portal that provides access to books and chapters. Each portal implementation must provide configuration, branding, and a service instance.
+
+## Interface definition
+
+```dart
+abstract interface class Portal<T extends PortalSettings> {
+  String get url;
+  String get name;
+  String get code;
+  PortalLogo get logo;
+  PortalService<T> get service;
+}
+```
+
+## Properties
+
+<ParamField path="url" type="String" required>
+  The base URL of the portal.
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  The display name of the portal.
+</ParamField>
+
+<ParamField path="code" type="String" required>
+  A unique identifier code for the portal.
+</ParamField>
+
+<ParamField path="logo" type="PortalLogo" required>
+  The logo configuration for the portal, including asset path and optional package name.
+</ParamField>
+
+<ParamField path="service" type="PortalService<T>" required>
+  The service instance that handles all portal operations like fetching books and chapters.
+</ParamField>
+
+## PortalLogo
+
+The `PortalLogo` class defines the branding assets for a portal.
+
+```dart
+final class PortalLogo {
+  const PortalLogo({required this.assetPath, this.packageName});
+
+  final String assetPath;
+  final String? packageName;
+}
+```
+
+### Properties
+
+<ParamField path="assetPath" type="String" required>
+  The path to the logo asset file.
+</ParamField>
+
+<ParamField path="packageName" type="String?">
+  Optional package name where the asset is located.
+</ParamField>
+
+## Usage example
+
+```dart
+class MyPortal implements Portal<MyPortalSettings> {
+  @override
+  String get url => 'https://example.com';
+  
+  @override
+  String get name => 'Example Portal';
+  
+  @override
+  String get code => 'example';
+  
+  @override
+  PortalLogo get logo => const PortalLogo(
+    assetPath: 'assets/logo.png',
+    packageName: 'my_portal_package',
+  );
+  
+  @override
+  PortalService<MyPortalSettings> get service => MyPortalService();
+}
+```
+
+## Type parameters
+
+<ParamField path="T" type="PortalSettings">
+  The settings type for this portal, must extend `PortalSettings`.
+</ParamField>

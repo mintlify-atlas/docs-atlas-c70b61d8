@@ -1,0 +1,305 @@
+---
+title: Monorepo structure
+description: Detailed explanation of ReUCM's monorepo organization and the role of each package
+---
+
+ReUCM uses a monorepo structure to organize code into focused, reusable packages. This approach enables clear separation of concerns and facilitates independent development of portal modules.
+
+## Repository layout
+
+```
+re_ucm/
+├── re_ucm_app/              # Main Flutter application
+├── re_ucm_core/             # Core models and interfaces
+├── re_ucm_lib/              # Shared services and utilities
+├── re_ucm_author_today/     # Author.Today portal module
+├── pubspec.yaml             # Root workspace configuration
+├── pubspec.lock             # Locked dependencies
+└── README.md                # Project documentation
+```
+
+## Package overview
+
+### re_ucm_core
+
+**Purpose**: Define core domain models and interfaces that are shared across all packages.
+
+**Location**: `re_ucm_core/lib/`
+
+**Key contents**:
+
+```
+re_ucm_core/lib/
+├── models/
+│   ├── book/
+│   │   ├── author.dart         # Author model
+│   │   ├── book.dart           # Book metadata model
+│   │   ├── chapter.dart        # Chapter content model
+│   │   ├── genre.dart          # Genre classification
+│   │   └── series.dart         # Book series information
+│   ├── portal/
+│   │   ├── portal.dart         # Portal interface definition
+│   │   ├── portal_service.dart # Service interface for portals
+│   │   ├── portal_settings.dart # Settings base class
+│   │   └── portal_settings_schema.dart # Dynamic UI schema types
+│   ├── book.dart               # Book models barrel file
+│   ├── portal.dart             # Portal models barrel file
+│   └── progress.dart           # Progress tracking for async operations
+├── logger.dart                 # Logging utilities
+└── re_ucm_core.dart            # Library export file
+```
+
+**Dependencies**: None (pure Dart, no external dependencies)
+
+**Design philosophy**: Keep this package minimal and stable. Changes here affect all other packages.
+
+### re_ucm_lib
+
+**Purpose**: Provide shared services that implement common business logic used across the application.
+
+**Location**: `re_ucm_lib/lib/`
+
+**Key contents**:
+
+```
+re_ucm_lib/lib/
+├── portals/
+│   ├── portal_factory.dart     # Portal registry and lookup
+│   └── portal_session.cg.dart  # Stateful portal wrapper with MobX
+├── recent_books/
+│   ├── domain/
+│   │   └── recent_book.cg.dart # Recent book model
+│   ├── data/
+│   │   ├── recent_books_storage.dart # Storage interface
+│   │   └── recent_books_storage_sembast.dart # Sembast implementation
+│   └── recent_books_service.cg.dart # Recent books service
+├── settings/
+│   ├── domain/
+│   │   ├── path_placeholders.dart # Available template variables
+│   │   ├── path_template.cg.dart  # Path template model
+│   │   └── template_formatter.dart # Format file paths from templates
+│   ├── data/
+│   │   ├── settings_storage.dart # Storage interface
+│   │   └── settings_storage_sembast.dart # Sembast implementation
+│   └── settings_service.dart   # Settings management service
+└── re_ucm_lib.dart             # Library export file
+```
+
+**Key services**:
+
+- **PortalFactory** (`portals/portal_factory.dart:3`) - Central registry for all portal implementations
+- **PortalSession** (`portals/portal_session.cg.dart:7`) - MobX-observable wrapper for portal state
+- **RecentBooksService** (`recent_books/recent_books_service.cg.dart:10`) - Tracks recently viewed books
+- **SettingsService** (`settings/settings_service.dart:7`) - Manages app settings and portal credentials
+
+**Dependencies**: `re_ucm_core`, `mobx`, `sembast`
+
+### re_ucm_app
+
+**Purpose**: Main Flutter application containing UI, features, and application-level logic.
+
+**Location**: `re_ucm_app/lib/`
+
+**Key contents**:
+
+```
+re_ucm_app/lib/
+├── core/
+│   ├── navigation/             # Router configuration
+│   ├── ui/                     # Theme and styling
+│   ├── constants.dart          # App-wide constants
+│   ├── di.dart                 # Dependency injection setup
+│   └── logger.dart             # Logger initialization
+├── features/
+│   ├── book/                   # Book viewing and downloading
+│   │   ├── presentation/
+│   │   │   ├── book_page.dart
+│   │   │   ├── book_page_controller.cg.dart
+│   │   │   └── widgets/
+│   ├── browser/                # In-app browser for auth
+│   ├── changelog/              # Version changelog display
+│   ├── common/                 # Shared widgets and utilities
+│   ├── converters/
+│   │   └── fb2/                # FB2 format converter
+│   │       ├── converter.dart
+│   │       ├── html_to_fb2.dart.dart
+│   │       └── html_entityes_replacer.dart
+│   ├── home/                   # Main screen
+│   ├── ota/                    # Over-the-air updates
+│   ├── portals/                # Portal configuration UI
+│   ├── recent_books/           # Recent books list
+│   ├── settings/               # Settings UI
+│   └── share_receiver/         # Handle incoming shared URLs
+├── assets/                     # Static assets
+└── main.dart                   # Application entry point
+```
+
+**Feature structure**: Each feature follows a clean architecture pattern:
+- `presentation/` - UI components and controllers
+- `domain/` - Business logic (if needed)
+- `data/` - Data sources (if needed)
+
+**Dependencies**: `re_ucm_core`, `re_ucm_lib`, `flutter`, portal packages
+
+### re_ucm_author_today
+
+**Purpose**: Portal module implementing Author.Today book source.
+
+**Location**: `re_ucm_author_today/lib/`
+
+**Key contents**:
+
+```
+re_ucm_author_today/lib/
+├── domain/
+│   ├── constants.dart          # Author.Today specific constants
+│   └── utils/
+│       ├── decrypt.dart        # Content decryption logic
+│       └── metadata_parser.dart # Parse API responses to Book model
+├── data/
+│   ├── models/
+│   │   ├── at_settings.cg.dart # Portal-specific settings
+│   │   └── at_chapter.cg.dart  # API response models
+│   └── author_today_api.cg.dart # Retrofit API client
+├── assets/
+│   └── logo.svg                # Portal logo
+├── author_today_service.dart   # PortalService implementation
+└── re_ucm_author_today.dart    # Portal implementation and exports
+```
+
+**Implementation pattern**:
+
+1. **Portal class** (`re_ucm_author_today.dart:6`) - Implements `Portal<ATSettings>`
+2. **Service class** (`author_today_service.dart:11`) - Implements `PortalService<ATSettings>`
+3. **Settings model** - Extends `PortalSettings`, stores auth tokens
+4. **API client** - Retrofit-based HTTP client for portal API
+5. **Domain logic** - Parsers, decryption, validation
+
+**Dependencies**: `re_ucm_core`, `dio`, `retrofit`
+
+## Dependency graph
+
+```
+┌─────────────────────┐
+│   re_ucm_app        │
+└──────────┬──────────┘
+           │
+           ├──────────────────┐
+           │                  │
+           ▼                  ▼
+┌─────────────────┐  ┌──────────────────────┐
+│  re_ucm_lib     │  │ re_ucm_author_today  │
+└────────┬────────┘  └──────────┬───────────┘
+         │                      │
+         │                      │
+         └──────────┬───────────┘
+                    │
+                    ▼
+           ┌─────────────────┐
+           │  re_ucm_core    │
+           └─────────────────┘
+```
+
+**Dependency rules**:
+- `re_ucm_core` has zero dependencies on other ReUCM packages
+- `re_ucm_lib` depends only on `re_ucm_core`
+- Portal packages depend only on `re_ucm_core`
+- `re_ucm_app` depends on all other packages
+
+## Adding new portal modules
+
+When the number of portal modules grows, they will be moved to a dedicated directory structure:
+
+```
+re_ucm/
+├── re_ucm_app/
+├── re_ucm_core/
+├── re_ucm_lib/
+└── portals/                    # Future organization
+    ├── re_ucm_author_today/
+    ├── re_ucm_litres/
+    ├── re_ucm_bookmate/
+    └── ...
+```
+
+As noted in the README (`README.md:43`), portal modules will be reorganized into a separate directory as more are added.
+
+## Monorepo tooling
+
+### Workspace management
+
+The root `pubspec.yaml` manages shared dependencies:
+
+```yaml
+resolution: workspace
+```
+
+All packages share a single `pubspec.lock` file, ensuring consistent dependency versions.
+
+### Code generation
+
+Several packages use code generation:
+- **MobX** - `*.cg.dart` files for reactive state management
+- **Retrofit** - API client generation
+- **JSON serialization** - Model serialization/deserialization
+
+Run code generation:
+```bash
+dart run build_runner build
+```
+
+### Development workflow
+
+1. **Core changes** - Modify `re_ucm_core/` when adding new domain concepts
+2. **Service changes** - Update `re_ucm_lib/` for shared business logic
+3. **Portal changes** - Work in specific portal package (e.g., `re_ucm_author_today/`)
+4. **App changes** - Implement features in `re_ucm_app/`
+
+## Package conventions
+
+### Naming
+
+- Core package: `re_ucm_core`
+- Library package: `re_ucm_lib`
+- Portal packages: `re_ucm_<portal_name>` (lowercase, underscores)
+- App package: `re_ucm_app`
+
+### File organization
+
+- Use barrel files (e.g., `book.dart`, `portal.dart`) to re-export related models
+- Group by feature/domain, not by technical role
+- Keep `lib/` directory relatively flat for small packages
+
+### Code generation files
+
+- Generated files use `.cg.dart` extension
+- Source files use `.dart` extension
+- Always commit generated files to version control
+
+## Benefits of this structure
+
+### Modularity
+
+Each portal is an independent package that can be:
+- Developed separately
+- Tested in isolation
+- Updated without affecting others
+- Disabled by removing from registration
+
+### Reusability
+
+- Core models shared across all portals
+- Services reused by all features
+- UI components shared across features
+
+### Maintainability
+
+- Clear boundaries between packages
+- Minimal coupling between portal implementations
+- Changes isolated to relevant packages
+
+### Scalability
+
+- Easy to add new portals
+- Feature folders scale independently
+- Services remain focused and simple

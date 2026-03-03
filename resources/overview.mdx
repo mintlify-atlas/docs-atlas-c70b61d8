@@ -1,0 +1,71 @@
+---
+title: Supported resources
+description: Overview of all supported book portals and resources in ReUCM
+---
+
+ReUCM supports downloading books from various online reading platforms. Each resource is implemented as a modular portal that handles authentication, book metadata retrieval, and chapter downloading.
+
+## Current portals
+
+<CardGroup cols={2}>
+  <Card title="Author.Today" icon="book" href="/resources/author-today">
+    Russian online literature platform with support for free and purchased books
+  </Card>
+</CardGroup>
+
+## Portal architecture
+
+Each portal in ReUCM implements a standardized interface defined in the core library. This modular architecture allows for easy addition of new resources.
+
+### Portal interface
+
+Every portal must implement the `Portal` interface from `re_ucm_core/lib/models/portal/portal.dart`:
+
+```dart
+abstract interface class Portal<T extends PortalSettings> {
+  String get url;           // Portal base URL
+  String get name;          // Display name
+  String get code;          // Unique identifier
+  PortalLogo get logo;      // Portal branding
+  PortalService<T> get service;  // Service implementation
+}
+```
+
+### Portal service
+
+The `PortalService` interface handles all portal-specific operations:
+
+- **Authentication**: Managing user credentials and session tokens
+- **URL parsing**: Extracting book IDs from portal URLs
+- **Metadata retrieval**: Fetching book information (title, authors, genres, etc.)
+- **Content download**: Retrieving chapter text and handling encryption
+- **Settings management**: Storing portal-specific configuration
+
+## Authentication methods
+
+Different portals support different authentication methods:
+
+- **Token-based**: Direct API token authentication
+- **Web-based**: OAuth or cookie-based authentication through embedded browser
+- **Anonymous**: Public content access without authentication
+
+## Adding new portals
+
+To add support for a new resource:
+
+1. Create a new module following the naming convention `re_ucm_[portal_name]`
+2. Implement the `Portal` interface
+3. Implement the `PortalService` interface with portal-specific logic
+4. Register the portal in `re_ucm_app/lib/core/di.dart`
+
+For detailed implementation guidance, see the [Author.Today module](https://github.com/reucm/reucm/tree/main/re_ucm_author_today) as a reference.
+
+## Supported formats
+
+All portals export books in the following formats:
+
+- **FB2** (FictionBook 2.0) - Primary export format with full metadata support
+
+## Privacy and security
+
+All authentication and book processing happens locally on your device. ReUCM never sends your credentials or downloaded content to external servers, ensuring complete privacy and security of your data.

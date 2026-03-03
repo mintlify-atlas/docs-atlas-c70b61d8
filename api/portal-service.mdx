@@ -1,0 +1,180 @@
+---
+title: PortalService
+description: Interface for implementing portal-specific business logic and content retrieval
+---
+
+The `PortalService` interface defines the contract for implementing portal-specific operations including settings management, authorization, URL parsing, and content retrieval.
+
+## Interface definition
+
+```dart
+abstract interface class PortalService<T extends PortalSettings> {
+  T settingsFromJson(Map<String, dynamic>? json);
+  
+  List<PortalSettingItem> buildSettingsSchema(T settings);
+  
+  bool isAuthorized(T settings);
+  
+  String getIdFromUrl(Uri url);
+  
+  void Function(T updatedSettings)? onSettingsChanged;
+  
+  Future<Book> getBookFromId(String id, {required T settings});
+  
+  Future<List<Chapter>> getTextFromId(String id, {required T settings});
+}
+```
+
+## Methods
+
+### settingsFromJson
+
+```dart
+T settingsFromJson(Map<String, dynamic>? json)
+```
+
+Deserializes portal settings from a JSON map.
+
+<ParamField path="json" type="Map<String, dynamic>?">
+  The JSON map containing settings data, may be null for default settings.
+</ParamField>
+
+**Returns:** An instance of the portal's settings type `T`.
+
+### buildSettingsSchema
+
+```dart
+List<PortalSettingItem> buildSettingsSchema(T settings)
+```
+
+Builds the settings schema UI definition for the portal.
+
+<ParamField path="settings" type="T" required>
+  The current settings instance.
+</ParamField>
+
+**Returns:** A list of `PortalSettingItem` objects defining the settings UI.
+
+### isAuthorized
+
+```dart
+bool isAuthorized(T settings)
+```
+
+Checks if the portal is authorized with the given settings.
+
+<ParamField path="settings" type="T" required>
+  The settings to check for authorization.
+</ParamField>
+
+**Returns:** `true` if authorized, `false` otherwise.
+
+### getIdFromUrl
+
+```dart
+String getIdFromUrl(Uri url)
+```
+
+Extracts the book or content ID from a portal URL.
+
+<ParamField path="url" type="Uri" required>
+  The URL to parse.
+</ParamField>
+
+**Returns:** The extracted content ID as a string.
+
+### getBookFromId
+
+```dart
+Future<Book> getBookFromId(String id, {required T settings})
+```
+
+Retrieves book metadata from the portal.
+
+<ParamField path="id" type="String" required>
+  The unique identifier of the book.
+</ParamField>
+
+<ParamField path="settings" type="T" required>
+  The portal settings to use for the request.
+</ParamField>
+
+**Returns:** A `Future` that resolves to a `Book` object with metadata.
+
+### getTextFromId
+
+```dart
+Future<List<Chapter>> getTextFromId(String id, {required T settings})
+```
+
+Retrieves all chapters for a book from the portal.
+
+<ParamField path="id" type="String" required>
+  The unique identifier of the book.
+</ParamField>
+
+<ParamField path="settings" type="T" required>
+  The portal settings to use for the request.
+</ParamField>
+
+**Returns:** A `Future` that resolves to a list of `Chapter` objects.
+
+## Properties
+
+<ParamField path="onSettingsChanged" type="void Function(T updatedSettings)?">
+  Optional callback invoked when settings are updated. Can be set to receive notifications of settings changes.
+</ParamField>
+
+## Usage example
+
+```dart
+class MyPortalService implements PortalService<MyPortalSettings> {
+  @override
+  MyPortalSettings settingsFromJson(Map<String, dynamic>? json) {
+    return MyPortalSettings.fromJson(json ?? {});
+  }
+  
+  @override
+  List<PortalSettingItem> buildSettingsSchema(MyPortalSettings settings) {
+    return [
+      PortalSettingItem.text(
+        key: 'apiKey',
+        label: 'API Key',
+        value: settings.apiKey,
+      ),
+    ];
+  }
+  
+  @override
+  bool isAuthorized(MyPortalSettings settings) {
+    return settings.apiKey?.isNotEmpty ?? false;
+  }
+  
+  @override
+  String getIdFromUrl(Uri url) {
+    return url.pathSegments.last;
+  }
+  
+  @override
+  Future<Book> getBookFromId(String id, {required MyPortalSettings settings}) async {
+    // Fetch and return book metadata
+    final response = await http.get(Uri.parse('https://api.example.com/books/$id'));
+    return Book.fromJson(jsonDecode(response.body));
+  }
+  
+  @override
+  Future<List<Chapter>> getTextFromId(String id, {required MyPortalSettings settings}) async {
+    // Fetch and return chapters
+    final response = await http.get(Uri.parse('https://api.example.com/books/$id/chapters'));
+    return (jsonDecode(response.body) as List)
+        .map((json) => Chapter.fromJson(json))
+        .toList();
+  }
+}
+```
+
+## Type parameters
+
+<ParamField path="T" type="PortalSettings">
+  The settings type for this portal service, must extend `PortalSettings`.
+</ParamField>

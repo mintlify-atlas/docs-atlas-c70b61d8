@@ -1,0 +1,89 @@
+---
+title: Chapter
+description: Model representing a single chapter of a book with title and content
+---
+
+The `Chapter` class represents a single chapter within a book, containing the chapter title and its text content.
+
+## Class definition
+
+```dart
+class Chapter {
+  String title;
+  String content;
+
+  Chapter({required this.title, required this.content});
+}
+```
+
+## Properties
+
+<ParamField path="title" type="String" required>
+  The title of the chapter.
+</ParamField>
+
+<ParamField path="content" type="String" required>
+  The full text content of the chapter.
+</ParamField>
+
+## Constructor
+
+```dart
+Chapter({
+  required String title,
+  required String content,
+})
+```
+
+Creates a new `Chapter` instance with the provided title and content.
+
+## Usage example
+
+```dart
+final chapter = Chapter(
+  title: 'Chapter 1: The Beginning',
+  content: '''
+Once upon a time, in a land far away, there lived a developer
+who wanted to create the perfect book reader application.
+
+The developer worked day and night, writing code and designing
+interfaces until finally, the application was complete.
+  ''',
+);
+
+print('Chapter: ${chapter.title}');
+print('Length: ${chapter.content.length} characters');
+
+// Chapters are typically used within a Book's chapters list
+final book = Book(
+  id: '123',
+  url: 'https://example.com/books/123',
+  title: 'The Developer\'s Tale',
+  authors: [Author(name: 'Jane Smith')],
+  isFinished: false,
+  lastUpdateTime: DateTime.now(),
+  genres: [Genre(name: 'Fiction')],
+  portal: myPortal,
+);
+
+book.chapters.add(chapter);
+```
+
+## Retrieving chapters
+
+Chapters are typically retrieved through the `PortalService.getTextFromId()` method:
+
+```dart
+final portalService = myPortal.service;
+final settings = myPortal.settings;
+
+// Get all chapters for a book
+final chapters = await portalService.getTextFromId(
+  '12345',
+  settings: settings,
+);
+
+for (final chapter in chapters) {
+  print('${chapter.title}: ${chapter.content.substring(0, 100)}...');
+}
+```

@@ -1,0 +1,197 @@
+---
+title: Author.Today
+description: Download books from Author.Today platform with support for authentication and encrypted content
+---
+
+Author.Today (author.today) is a Russian online literature platform where authors publish their works. ReUCM supports downloading both free and purchased books from this portal.
+
+## Overview
+
+<Card title="Portal information" icon="info-circle">
+  **URL**: https://author.today  
+  **Code**: AT  
+  **Authentication**: Token-based or web-based login  
+  **Content**: Free and purchased books with encryption support
+</Card>
+
+## Features
+
+- Download free and purchased books where downloading is normally restricted
+- Support for both authentication methods (token and web login)
+- Automatic handling of encrypted chapter content
+- Book metadata extraction including authors, genres, series, and tags
+- Multi-author support (up to 3 co-authors)
+
+## Authentication
+
+Author.Today requires authentication to download books. ReUCM supports two authentication methods:
+
+### Web-based login
+
+The recommended method for most users:
+
+1. Open ReUCM settings and navigate to Author.Today
+2. Select "Вход через web" (Login via web)
+3. A browser window will open to Author.Today login page
+4. Enter your credentials and log in
+5. ReUCM will automatically capture the session and extract your authentication token
+
+The app uses a mobile user agent to ensure compatibility:
+```
+Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) 
+Chrome/127.0.0.0 Mobile Safari/537.36 EdgA/127.0.0.0 okhttp/4.12.0 X_AT_API
+```
+
+### Token-based login
+
+For advanced users who have direct access to their API token:
+
+1. Open ReUCM settings and navigate to Author.Today
+2. Select "Вход с помощью токена" (Login with token)
+3. Paste your Bearer token
+4. ReUCM will validate the token and store your user ID
+
+To obtain your token manually:
+- Log in to Author.Today in a browser
+- Extract the `LoginCookie` value from your browser's cookies
+- Use the API endpoint `/account/bearer-token` to exchange the cookie for a token
+
+### Token refresh
+
+ReUCM automatically handles token expiration by calling the `/account/refresh-token` endpoint. If refresh fails, you'll need to re-authenticate.
+
+## Downloading books
+
+### Supported URL formats
+
+ReUCM accepts Author.Today book URLs in the following formats:
+
+- `https://author.today/work/[id]` - Standard book page
+- `https://author.today/reader/[id]` - Reader page
+
+Where `[id]` is the numeric book identifier.
+
+### Download process
+
+1. Copy the book URL from Author.Today
+2. Paste it into ReUCM or use the system "Share" menu
+3. ReUCM will:
+   - Extract the book ID from the URL
+   - Fetch book metadata via `/v1/work/{id}/details`
+   - Download all chapter texts via `/v1/work/{id}/chapter/many-texts`
+   - Decrypt encrypted chapter content
+   - Generate an FB2 file with complete metadata
+
+## Content decryption
+
+Author.Today encrypts chapter content to prevent unauthorized downloads. ReUCM implements the decryption algorithm used by the official mobile app.
+
+### Encryption details
+
+Each chapter is encrypted with AES-128 in CBC mode:
+
+- **Algorithm**: AES/CBC/PKCS7Padding
+- **Key derivation**: MD5 hash of user-specific key material
+- **Key material**: Reverse(chapter_key) + user_id + app_certificate
+- **Encoding**: Base64-encoded ciphertext
+
+The decryption key is generated from:
+```dart
+generateUserKey(
+  inputString: chapter.key,  // Per-chapter encryption key
+  userId: settings.userId,    // Your Author.Today user ID
+  certHash: xATCertificate,   // App certificate signature
+)
+```
+
+Guest users (not logged in) use "Guest" as the user ID component.
+
+## Book metadata
+
+ReUCM extracts comprehensive metadata from Author.Today:
+
+<CardGroup cols={2}>
+  <Card title="Basic information" icon="book">
+    - Book ID and title
+    - Annotation (description)
+    - Cover image URL
+    - Last update timestamp
+    - Completion status
+    - Total text length
+  </Card>
+  
+  <Card title="Author information" icon="user">
+    - Primary author name and username
+    - Co-author (if present)
+    - Second co-author (if present)
+    - All authors are included in FB2 export
+  </Card>
+  
+  <Card title="Classification" icon="tags">
+    - Primary genre ID
+    - First sub-genre ID
+    - Second sub-genre ID
+    - Custom tags array
+  </Card>
+  
+  <Card title="Series information" icon="layer-group">
+    - Series ID and title
+    - Book number in series
+    - Proper series ordering in FB2
+  </Card>
+</CardGroup>
+
+## API endpoints
+
+ReUCM communicates with Author.Today's REST API:
+
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/account/bearer-token` | GET | Exchange cookie for token |
+| `/account/current-user` | GET | Validate token and get user info |
+| `/account/refresh-token` | POST | Refresh expired token |
+| `/v1/work/{id}/details` | GET | Get book metadata |
+| `/v1/work/{id}/chapter/many-texts` | GET | Download all chapters |
+
+Base URL: `https://api.author.today/v1`
+
+All authenticated requests include:
+```
+Authorization: Bearer {token}
+X-AT-Client: android_1.8.013-GMS
+```
+
+## Implementation reference
+
+The Author.Today module is located in `re_ucm_author_today/` and serves as a reference implementation for adding new portals:
+
+- `lib/re_ucm_author_today.dart` - Portal implementation at re_ucm_author_today/lib/re_ucm_author_today.dart:6
+- `lib/author_today_service.dart` - Service logic at re_ucm_author_today/lib/author_today_service.dart:11
+- `lib/data/author_today_api.cg.dart` - REST API client at re_ucm_author_today/lib/data/author_today_api.cg.dart:11
+- `lib/domain/utils/decrypt.dart` - Content decryption at re_ucm_author_today/lib/domain/utils/decrypt.dart:64
+- `lib/domain/utils/metadata_parser.dart` - Metadata transformation
+
+## Troubleshooting
+
+### Authentication failed
+
+- Ensure you're logged in to Author.Today
+- Try the web-based login method if token login fails
+- Check that your account has access to the book you're trying to download
+
+### Token expired
+
+- ReUCM will attempt to refresh the token automatically
+- If refresh fails, log out and log back in through settings
+
+### Decryption errors
+
+- Ensure you're authenticated (guest access may have limited decryption)
+- Verify your user ID is correctly stored in settings
+- Some books may require purchase to access encrypted content
+
+### Invalid link error
+
+- Ensure the URL matches the format: `https://author.today/work/{id}` or `https://author.today/reader/{id}`
+- The ID must be numeric
+- Some content types (user profiles, collections) are not supported

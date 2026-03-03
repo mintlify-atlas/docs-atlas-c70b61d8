@@ -1,0 +1,339 @@
+---
+title: Book format converters
+description: Understanding and extending the FB2 converter system in ReUCM
+---
+
+ReUCM includes a converter system to transform downloaded book content into standardized formats. Currently, FB2 (FictionBook 2.0) is the primary supported export format.
+
+## FB2 converter
+
+The FB2 converter transforms book data into the FictionBook 2.0 XML format, widely supported by e-book readers.
+
+**Source:** `re_ucm_app/lib/features/converters/fb2/converter.dart`
+
+### Architecture
+
+The converter uses Dart isolates for performance, running the conversion process in a separate thread to avoid blocking the UI.
+
+```dart
+Future<Uint8List> convertToFB2(
+  Book book,
+  Function(Progress) progressCallback,
+) async {
+  ReceivePort receivePort = ReceivePort();
+  
+  Isolate.spawn(convertToFB2Isolate, {
+    'sendPort': receivePort.sendPort,
+    'data': _BookMinimal.fromBook(book),
+  });
+  
+  await for (var message in receivePort) {
+    if (message is Progress) {
+      progressCallback(message);
+    } else if (message is Uint8List) {
+      return message;
+    }
+  }
+  
+  throw Exception('Did not receive book data from isolate');
+}
+```
+
+### Conversion process
+
+The converter follows these stages (from `re_ucm_core/lib/models/progress.dart`):
+
+<Steps>
+  <Step title="Analyzing">
+    Parses chapter HTML content and extracts image sources.
+  </Step>
+
+  <Step title="Image downloading">
+    Downloads all images (cover and inline images) and converts them to base64.
+
+    ```dart
+    final dio = Dio();
+    await Future.wait(
+      sources.map((src) async {
+        final url = src[0] == '/' ? data.portal.url + src : src;
+        Response<Uint8List> res = await dio.get<Uint8List>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        images[getTagFromSource(src)] = base64Encode(res.data!);
+      }),
+    );
+    ```
+  </Step>
+
+  <Step title="Building">
+    Constructs the FB2 XML structure with metadata, chapters, and embedded images.
+  </Step>
+
+  <Step title="Done">
+    Returns the completed FB2 file as UTF-8 encoded bytes.
+  </Step>
+</Steps>
+
+### FB2 structure
+
+The generated FB2 file includes:
+
+#### Description section
+
+```xml
+<description>
+  <title-info>
+    <genre><!-- Book genres --></genre>
+    <author>
+      <first-name><!-- Author name --></first-name>
+      <last-name><!-- Author surname --></last-name>
+      <home-page><!-- Author profile URL --></home-page>
+    </author>
+    <book-title><!-- Book title --></book-title>
+    <annotation><!-- Book description --></annotation>
+    <keywords><!-- Tags --></keywords>
+    <date><!-- Last update date --></date>
+    <coverpage>
+      <image l:href="#cover-image" />
+    </coverpage>
+    <sequence name="<!-- Series name -->" number="<!-- Book number -->" />
+  </title-info>
+  <document-info>
+    <author><nickname>Adherent-GA</nickname></author>
+    <program-used>ReUltimateCopyManager 2.4.0</program-used>
+    <date><!-- Generation date --></date>
+    <src-url><!-- Original book URL --></src-url>
+    <id>UCM-{portal-code}-{book-id}</id>
+  </document-info>
+</description>
+```
+
+#### Body section
+
+```xml
+<body>
+  <title><p><!-- Book title --></p></title>
+  <section>
+    <title><p><!-- Chapter title --></p></title>
+    <p><!-- Chapter content --></p>
+  </section>
+  <!-- More chapters -->
+  <section>
+    <title><p>Послесловие @books_fine</p></title>
+    <!-- BooksFine channel information -->
+  </section>
+</body>
+```
+
+#### Binary section
+
+```xml
+<binary id="image-1" content-type="image/png">
+  <!-- Base64 encoded image data -->
+</binary>
+```
+
+### HTML to FB2 conversion
+
+Chapter content is converted from HTML to FB2 elements:
+
+**Source:** `re_ucm_app/lib/features/converters/fb2/html_to_fb2.dart.dart`
+
+```dart
+List<XmlElement> htmlToFB2(String html) {
+  final document = parse(html);
+  // Convert HTML elements to FB2 elements
+  // Supported: <p>, <strong>, <em>, <a>, <img>, etc.
+}
+```
+
+Supported HTML elements:
+- `<p>` → `<p>`
+- `<strong>`, `<b>` → `<strong>`
+- `<em>`, `<i>` → `<emphasis>`
+- `<a>` → `<a l:href="...">`
+- `<img>` → `<image l:href="#...">`
+- `<br>` → `<empty-line>`
+
+### Author name parsing
+
+The converter intelligently parses author names:
+
+**Source:** `re_ucm_app/lib/features/converters/fb2/converter.dart:189-213`
+
+```dart
+for (var author in data.authors) {
+  var fullName = author.name.split(' ');
+  book.element('author', nest: () {
+    switch (fullName.length) {
+      case 1:
+        book.element('nickname', nest: fullName[0]);
+        break;
+      case 2:
+        book.element('first-name', nest: fullName[0]);
+        book.element('last-name', nest: fullName[1]);
+        break;
+      case 3:
+        book.element('first-name', nest: fullName[1]);
+        book.element('middle-name', nest: fullName[2]);
+        book.element('last-name', nest: fullName[0]);
+        break;
+    }
+    book.element('home-page', nest: author.url);
+  });
+}
+```
+
+<Info>
+For 3-part names, the converter assumes Russian name order (Surname First-name Middle-name) and reorders them for FB2.
+</Info>
+
+### Progress tracking
+
+The converter reports progress through multiple stages:
+
+```dart
+enum Stages {
+  analyzing,
+  imageDownloading,
+  building,
+  done,
+}
+
+class Progress {
+  final Stages stage;
+  final int? total;
+  final int? current;
+
+  Progress({required this.stage, this.total, this.current});
+}
+```
+
+The UI can subscribe to progress updates:
+
+```dart
+final bytes = await convertToFB2(book, (progress) {
+  if (progress.stage == Stages.imageDownloading) {
+    print('Downloading images: ${progress.current}/${progress.total}');
+  }
+});
+```
+
+### Image handling
+
+Images are downloaded and embedded as base64:
+
+**Source:** `re_ucm_app/lib/features/converters/fb2/converter.dart:140-166`
+
+```dart
+final dio = Dio();
+await Future.wait(
+  sources.map((src) async {
+    try {
+      final url = src[0] == '/' ? data.portal.url + src : src;
+      Response<Uint8List> res = await dio.get<Uint8List>(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            // Workaround for AT image loading from abroad
+            if (data.portal.code == codeAT) "user-agent": userAgentAT,
+          },
+        ),
+      );
+      images[getTagFromSource(src)] = base64Encode(res.data!);
+      progressCallback(
+        Progress(
+          stage: Stages.imageDownloading,
+          total: sources.length,
+          current: ++current,
+        ),
+      );
+    } catch (e) {
+      logger.e('Error downloading image $src', error: e);
+    }
+  }),
+);
+```
+
+<Warning>
+Image download failures are logged but don't stop the conversion process. Missing images will simply be omitted from the final file.
+</Warning>
+
+## Adding support for new formats
+
+To add support for a new format (e.g., EPUB):
+
+<Steps>
+  <Step title="Create a new converter module">
+    Create a new file in `re_ucm_app/lib/features/converters/`:
+
+    ```
+    converters/
+      fb2/
+        converter.dart
+      epub/
+        converter.dart  # New file
+    ```
+  </Step>
+
+  <Step title="Implement the conversion function">
+    Follow the same isolate-based pattern:
+
+    ```dart
+    Future<Uint8List> convertToEPUB(
+      Book book,
+      Function(Progress) progressCallback,
+    ) async {
+      // Implementation
+    }
+    ```
+  </Step>
+
+  <Step title="Add format to UI">
+    Update the download UI to offer the new format as an option.
+  </Step>
+</Steps>
+
+## Best practices
+
+### Performance
+
+- Always use isolates for heavy processing
+- Report progress at regular intervals
+- Handle image download failures gracefully
+
+### Content quality
+
+- Preserve original HTML formatting where possible
+- Clean up invalid HTML entities
+- Handle missing or malformed content
+
+### Error handling
+
+```dart
+try {
+  final bytes = await convertToFB2(book, progressCallback);
+  // Save file
+} catch (e) {
+  logger.e('Conversion failed', error: e);
+  // Show error to user
+}
+```
+
+## Testing
+
+Test the converter with books that have:
+- Multiple authors
+- Series information
+- Rich HTML content (bold, italic, links, images)
+- Special characters and non-Latin text
+- Large numbers of chapters (100+)
+- High-resolution cover images
+
+## Next steps
+
+- Learn about the [Book model](/api/book)
+- Understand the [Chapter model](/api/chapter)
+- Explore [portal implementation](/dev/creating-portal)

@@ -1,0 +1,264 @@
+---
+title: Contributing guidelines
+description: Learn how to contribute to ReUCM, including code style, development workflow, and how to add new portal modules
+---
+
+## Getting started
+
+Thank you for your interest in contributing to ReUCM! This guide will help you understand the development workflow and contribution process.
+
+Before contributing, make sure you have completed the [development environment setup](/dev/setup).
+
+## Code style
+
+ReUCM follows standard Dart and Flutter conventions:
+
+- Use `flutter_lints` package rules (configured in `analysis_options.yaml`)
+- Follow Dart style guide naming conventions
+- Use meaningful variable and function names
+- Write clear commit messages that explain the "why" behind changes
+
+### Analysis options
+
+The project uses strict linting rules across all workspace packages. Run the analyzer before submitting:
+
+```bash
+fvm flutter analyze
+```
+
+## Development workflow
+
+<Steps>
+  <Step title="Create a feature branch">
+    Create a new branch for your changes:
+    
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+  </Step>
+
+  <Step title="Make your changes">
+    Implement your feature or bug fix. Remember to:
+    
+    - Run code generation after modifying models or stores
+    - Test your changes on target platforms
+    - Follow the existing code style and patterns
+  </Step>
+
+  <Step title="Run code generation">
+    If you've modified any files that require code generation:
+    
+    ```bash
+    dart run build_runner build -d --workspace
+    ```
+  </Step>
+
+  <Step title="Test your changes">
+    Verify your changes work as expected:
+    
+    ```bash
+    cd re_ucm_app
+    fvm flutter run
+    ```
+  </Step>
+
+  <Step title="Commit your changes">
+    Commit with a clear, descriptive message:
+    
+    ```bash
+    git add .
+    git commit -m "Add: brief description of changes"
+    ```
+  </Step>
+
+  <Step title="Submit a pull request">
+    Push your branch and create a pull request on GitHub:
+    
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+</Steps>
+
+## Project architecture
+
+### Modular structure
+
+ReUCM uses a modular architecture to support multiple book resources. The core interfaces and models are in `re_ucm_core`, while each resource (like Author.Today) is implemented as a separate module.
+
+#### Core package (`re_ucm_core`)
+
+Contains:
+- `Portal` interface - Main interface for resource modules
+- Shared models and data structures
+- Common UI components
+- Logging utilities
+
+#### Portal modules
+
+Each supported resource is implemented as a portal module (e.g., `re_ucm_author_today`). Portal modules are independent packages that implement the `Portal` interface.
+
+### State management
+
+The project uses **MobX** for state management:
+
+- Store classes are defined with `@store` annotation
+- Observable state with `@observable`
+- Actions with `@action`
+- Computed values with `@computed`
+
+Code generation is required after modifying stores:
+
+```bash
+dart run build_runner build -d --workspace
+```
+
+## Adding a new portal module
+
+To add support for a new book resource:
+
+<Steps>
+  <Step title="Create the portal package">
+    Create a new package in the workspace:
+    
+    ```bash
+    flutter create --template=package re_ucm_new_resource
+    ```
+    
+    Add it to the workspace in the root `pubspec.yaml`:
+    
+    ```yaml
+    workspace:
+      - re_ucm_app
+      - re_ucm_author_today
+      - re_ucm_core
+      - re_ucm_lib
+      - re_ucm_new_resource  # Your new module
+    ```
+  </Step>
+
+  <Step title="Implement the Portal interface">
+    Create a class that implements the `Portal` interface from `re_ucm_core/lib/models/portal/portal.dart`.
+    
+    The `Portal` interface defines:
+    - Resource identification (name, logo, URL patterns)
+    - Authentication handling
+    - Book metadata retrieval
+    - Book content downloading
+    - Format conversion
+  </Step>
+
+  <Step title="Register the portal">
+    Register your portal module in `re_ucm_app/lib/core/di.dart`.
+    
+    This makes the portal available to the main application.
+  </Step>
+
+  <Step title="Test the integration">
+    Test your portal implementation:
+    
+    - Authentication flow
+    - Book detection from shared URLs
+    - Metadata retrieval
+    - Download functionality
+    - Format conversion (if applicable)
+  </Step>
+</Steps>
+
+<Note>
+Refer to `re_ucm_author_today` as a reference implementation when creating a new portal module.
+</Note>
+
+## Dependencies
+
+### Key dependencies
+
+- **mobx** / **flutter_mobx** - State management
+- **go_router** - Navigation
+- **sembast** - Local database
+- **dio** - HTTP client
+- **flutter_inappwebview** - In-app browser for authentication
+- **xml** - XML parsing for fb2 format
+
+### Adding dependencies
+
+When adding new dependencies:
+
+1. Add to the appropriate package's `pubspec.yaml`
+2. Use `resolution: workspace` for workspace packages
+3. Run `fvm flutter pub get` from the root
+
+## Dependency overrides
+
+The root `pubspec.yaml` includes a dependency override for `flutter_inappwebview`:
+
+```yaml
+dependency_overrides:
+  flutter_inappwebview:
+    git:
+      url: https://github.com/pichillilorenzo/flutter_inappwebview.git
+      path: flutter_inappwebview
+```
+
+This ensures all packages use the same version from the git repository.
+
+## Building for production
+
+### Android
+
+Build split APKs for different CPU architectures:
+
+```bash
+cd re_ucm_app
+fvm flutter build apk --split-per-abi
+```
+
+Or use the VS Code task: **[Build] Split APK**
+
+### Windows
+
+Build Windows executable:
+
+```bash
+cd re_ucm_app
+fvm flutter build windows
+```
+
+Build Windows installer with Inno Setup:
+
+```bash
+cd re_ucm_app
+make innoinstall  # First time only
+make inno
+```
+
+## Code generation details
+
+### Build configuration
+
+The project uses custom build configuration in `build.yaml`:
+
+- Generated files are placed in `.gen` directories
+- Custom changelog builder generates code from `CHANGELOG.md`
+- MobX and JSON serialization code generation
+
+### Running build_runner
+
+One-time generation:
+```bash
+dart run build_runner build -d --workspace
+```
+
+Watch mode (auto-regenerate on file changes):
+```bash
+dart run build_runner watch -d --workspace
+```
+
+## Questions or issues?
+
+If you have questions or encounter issues:
+
+- Check existing issues on [GitHub](https://github.com/BooksFine/re_ucm/issues)
+- Review the `re_ucm_core` documentation for API details
+- Look at `re_ucm_author_today` as a reference implementation
+- Open a new issue with detailed information about your problem

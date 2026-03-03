@@ -1,0 +1,78 @@
+---
+title: Introduction to ReUCM
+description: Cross-platform book downloader for accessing purchased and free books from various resources with download restrictions
+---
+
+# Introduction to ReUCM
+
+ReUCM (ReUltimateCopyManager) is a cross-platform application that enables you to download purchased and free books from various online resources, even when those resources have download restrictions. All processing happens locally on your device - no need to share your credentials with third-party servers.
+
+<Note>
+  ReUCM is a reincarnation of the Ultimate Copy Manager JavaScript userscript, originally created for the Telegram channel [BooksFine](https://t.me/BookFine).
+</Note>
+
+## Key features
+
+ReUCM provides powerful functionality for book enthusiasts:
+
+- **Download restricted books** - Access purchased and free books with download restrictions in various formats
+- **Built-in browser** - Open books and authenticate with services directly within the app
+- **Share menu integration** - Quickly open books through your system's "Share" menu (Android)
+- **OTA updates** - Receive over-the-air updates automatically
+- **Privacy-focused** - All operations happen on your device without sending credentials to external servers
+- **FB2 format support** - Export books in FB2 format with series information
+- **Cross-platform** - Available for Windows, Android, and iOS
+
+## Supported resources
+
+Currently, ReUCM supports:
+
+- **Author.Today** - Popular Russian book publishing platform
+
+<Info>
+  The project has a modular architecture, making it easy to add support for additional book resources in the future.
+</Info>
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install ReUCM on Windows, Android, or iOS
+  </Card>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Download your first book in minutes
+  </Card>
+  <Card title="Development" icon="code" href="/development">
+    Contribute to ReUCM or add new resource modules
+  </Card>
+  <Card title="GitHub repository" icon="github" href="https://github.com/BooksFine/re_ucm">
+    View source code and report issues
+  </Card>
+</CardGroup>
+
+## System requirements
+
+### Windows
+
+- Windows 10 (version 1803) or higher
+- Microsoft Edge and WebView2 must be installed (not removed)
+
+### Android
+
+- Android 5.0 (API level 21) or higher
+- Share menu integration requires Android 6.0 or higher
+
+### iOS
+
+- iOS 12.0 or higher
+
+## Architecture
+
+ReUCM is built as a monorepo with a modular architecture:
+
+- **re_ucm_app** - Main application
+- **re_ucm_core** - Common models, interfaces, and UI components
+- **re_ucm_author_today** - Author.Today support module
+- **re_ucm_lib** - Shared library code
+
+This modular design allows developers to easily extend functionality and add support for new book resources by implementing the `Portal` interface.

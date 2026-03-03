@@ -1,0 +1,118 @@
+---
+title: Downloading books
+description: Learn how to download and save books from supported portals using ReUCM
+---
+
+ReUCM allows you to download books from various supported portals and save them in FB2 format on your device.
+
+## Finding books
+
+There are multiple ways to access books in ReUCM:
+
+<Steps>
+  <Step title="Enter a book URL">
+    On the home page, paste a book URL from a supported portal into the link input field and tap **Go**. The app will automatically detect the portal and navigate to the book page.
+  </Step>
+  
+  <Step title="Browse portals">
+    Use the built-in browser to navigate through supported portals. When you open a book page, the app will automatically detect it and switch to the book download interface.
+  </Step>
+  
+  <Step title="Access recent books">
+    View your recently accessed books in the "Recent" section on the home page for quick access to books you've previously viewed.
+  </Step>
+</Steps>
+
+<Tip>
+You can also share book links directly to ReUCM from your browser using Android's share menu.
+</Tip>
+
+## Downloading a book
+
+Once you've navigated to a book page, you'll see the book's metadata including title, authors, series information, and annotation.
+
+<Steps>
+  <Step title="Check authorization status">
+    If the book requires authorization and you're not logged in, you'll see an alert indicating you need to authorize. Configure your portal credentials in [settings](/guide/settings) first.
+  </Step>
+  
+  <Step title="Start the download">
+    Tap the **Download** button to begin downloading the book. The app will:
+    - Fetch all book chapters from the portal
+    - Convert the content to FB2 format
+    - Display a progress indicator during the conversion process
+  </Step>
+  
+  <Step title="Wait for completion">
+    The download progress bar will show the current stage:
+    - Downloading chapters
+    - Converting to FB2 format
+    - Processing completed
+  </Step>
+</Steps>
+
+<Note>
+You cannot navigate away from the book page while a download is in progress. The back button will be disabled until the download completes.
+</Note>
+
+## Saving books
+
+After downloading, you have two options for managing your book:
+
+### Share the book
+
+Tap the **Share** button to share the downloaded FB2 file with other apps on your device. The share dialog includes:
+
+- Book title and authors
+- Series information (if applicable)
+- Last downloaded chapter title
+- The FB2 file attachment
+
+### Save to device
+
+Tap the **Save** button to save the book to your device:
+
+<Steps>
+  <Step title="Grant storage permission">
+    If this is your first time saving, you'll need to grant storage permissions to the app.
+  </Step>
+  
+  <Step title="Choose save location">
+    The save behavior depends on your [save settings](/guide/settings#save-settings):
+    
+    - **With save directory configured**: The book is automatically saved to your configured directory using your filename template
+    - **Without save directory**: A file picker dialog appears, allowing you to choose where to save the book
+  </Step>
+  
+  <Step title="Confirmation">
+    A success message appears when the book is saved successfully.
+  </Step>
+</Steps>
+
+<Warning>
+The filename will automatically sanitize any invalid characters (< > : " / \ | ? *) from the book title and series name.
+</Warning>
+
+## Book information displayed
+
+The book page shows comprehensive metadata:
+
+- **Cover image**: Visual representation of the book
+- **Title**: Full book title
+- **Authors**: All listed authors
+- **Series information**: Series name and number (if part of a series)
+- **Annotation**: Book description or summary
+- **Download progress**: Real-time progress during download and conversion
+
+## Troubleshooting
+
+If you encounter issues while downloading:
+
+- **Download fails**: Check your internet connection and ensure the portal is accessible
+- **Authorization required**: Configure your credentials in settings for the specific portal
+- **Conversion errors**: Try downloading the book again or refresh the book page
+- **Save fails**: Verify you've granted storage permissions and have sufficient storage space
+
+<Tip>
+Pull down on the book page to refresh and reload the book metadata if information appears outdated.
+</Tip>

@@ -1,0 +1,326 @@
+---
+title: re_ucm_lib
+description: Library providing services for portal management, settings persistence, and recent books tracking
+---
+
+## Overview
+
+The `re_ucm_lib` library provides high-level services and business logic for the ReUCM application. It includes portal session management, settings persistence, recent books tracking, and path template formatting.
+
+**Version:** 1.0.0
+
+## Dependencies
+
+- `re_ucm_core` - Core models and interfaces
+- `mobx` - State management
+- `sembast` - NoSQL database for persistence
+- `freezed` - Immutable data classes
+- `json_annotation` - JSON serialization
+
+## Exports
+
+The library exports three main service categories:
+
+### Settings
+
+- `settings/settings_service.dart` - Main settings service
+- `settings/domain/path_placeholders.dart` - Path placeholder definitions
+- `settings/domain/path_template.cg.dart` - Path template models
+- `settings/domain/template_formatter.dart` - Template rendering utilities
+
+### Recent books
+
+- `recent_books/domain/recent_book.cg.dart` - Recent book model
+- `recent_books/recent_books_service.cg.dart` - Recent books service
+
+### Portals
+
+- `portals/portal_factory.dart` - Portal registration and lookup
+- `portals/portal_session.cg.dart` - Portal session management
+
+## Services
+
+### SettingsService
+
+Manages application settings and portal configurations with persistence.
+
+```dart
+class SettingsService {
+  // Initialize service with database directory
+  static Future<SettingsService> init(String databaseDirectory) async
+  
+  // Download path template for books
+  PathTemplate get downloadPathTemplate;
+  
+  // Separator used between multiple authors
+  String get authorsPathSeparator;
+  
+  // Optional custom save directory
+  String? get saveDirectory;
+  
+  // All portal sessions
+  List<PortalSession> get sessions;
+  
+  // Get session by portal code
+  PortalSession sessionByCode(String code);
+  
+  // Update settings
+  void updateDownloadPathTemplate(PathTemplate template);
+  void updateAuthorsPathSeparator(String separator);
+  void updateSaveDirectory(String? path);
+}
+```
+
+**Example usage:**
+
+```dart
+// Initialize the service
+final settingsService = await SettingsService.init('/app/data');
+
+// Access portal sessions
+final authorTodaySession = settingsService.sessionByCode('author_today');
+
+// Update download path template
+final template = PathTemplate(
+  path: '⦘Авторы⦗/⦘Название⦗',
+  seriesPath: '⦘Авторы⦗/⦘Серия⦗/⦘Название⦗',
+);
+settingsService.updateDownloadPathTemplate(template);
+```
+
+### RecentBooksService
+
+Tracks recently viewed books with MobX observables for reactive UI updates.
+
+```dart
+class RecentBooksService {
+  // Initialize service with database directory
+  static Future<RecentBooksService> init(String databaseDirectory) async
+  
+  // Observable list of recent books
+  final recentBooks = <RecentBook>[].asObservable();
+  
+  // Add a book to recent books
+  Future<void> addRecentBook(Book book) async
+  
+  // Remove a book from recent books
+  Future<void> removeRecentBook(RecentBook book) async
+  
+  // Restore a previously removed book
+  Future<void> restoreRecentBook(RecentBook book) async
+}
+```
+
+**Example usage:**
+
+```dart
+final recentBooksService = await RecentBooksService.init('/app/data');
+
+// Add a book when user views it
+await recentBooksService.addRecentBook(book);
+
+// Remove a book
+await recentBooksService.removeRecentBook(recentBook);
+
+// Observe changes in Flutter with flutter_mobx
+Observer(
+  builder: (_) => ListView.builder(
+    itemCount: recentBooksService.recentBooks.length,
+    itemBuilder: (context, index) {
+      final book = recentBooksService.recentBooks[index];
+      return ListTile(title: Text(book.title));
+    },
+  ),
+)
+```
+
+### PortalFactory
+
+Centralized registry for portal implementations.
+
+```dart
+class PortalFactory {
+  // Register a portal
+  static void registerPortal(Portal portal)
+  
+  // Register multiple portals
+  static void registerAll(List<Portal> portals)
+  
+  // Get all registered portals
+  static List<Portal> get portals
+  
+  // Lookup portal by code
+  static Portal fromCode(String code)
+  
+  // Lookup portal by URL
+  static Portal fromUrl(Uri uri)
+  
+  // JSON serialization helpers
+  static Portal fromJson(Map<String, dynamic> json)
+  static Map<String, dynamic> toJson(Portal portal)
+}
+```
+
+**Example usage:**
+
+```dart
+// Register portals at app startup
+PortalFactory.registerAll([AuthorToday(), FicBook(), LitNet()]);
+
+// Lookup portal from URL
+final url = Uri.parse('https://author.today/work/12345');
+final portal = PortalFactory.fromUrl(url);
+
+// Get all available portals
+final allPortals = PortalFactory.portals;
+```
+
+### PortalSession
+
+Manages a portal instance with its settings, providing reactive state and persistence.
+
+```dart
+class PortalSession<T extends PortalSettings> {
+  final Portal<T> portal;
+  
+  // Observable settings
+  @observable
+  late T settings;
+  
+  // Computed authorization status
+  @computed
+  bool get isAuthorized;
+  
+  // Computed settings schema for UI
+  @computed
+  List<PortalSettingItem> get schema;
+  
+  // Portal properties
+  String get url;
+  String get name;
+  String get code;
+  PortalLogo get logo;
+  PortalService<T> get service;
+  
+  // Update settings and persist
+  Future<void> updateSettings(T newSettings) async
+  
+  // Reset temporary flags in settings
+  void resetTempFlags()
+  
+  // Fetch book data
+  Future<Book> getBook(String id)
+  Future<List<Chapter>> getText(String id)
+}
+```
+
+**Example usage:**
+
+```dart
+final session = settingsService.sessionByCode('author_today');
+
+// Check authorization
+if (!session.isAuthorized) {
+  // Show login UI
+}
+
+// Fetch book
+final book = await session.getBook('12345');
+final chapters = await session.getText('12345');
+
+// Update settings
+final newSettings = AuthorTodaySettings(sessionCookie: 'new_token');
+await session.updateSettings(newSettings);
+```
+
+## Data models
+
+### RecentBook
+
+Represents a recently viewed book with minimal metadata for quick display.
+
+```dart
+class RecentBook {
+  final String id;
+  final String title;
+  final String authors;
+  final String? coverUrl;
+  final String? seriesName;
+  final int? seriesNumber;
+  final Portal portal;
+  final DateTime added;
+}
+```
+
+### PathTemplate
+
+Defines how book files should be named and organized.
+
+```dart
+class PathTemplate {
+  final String path;        // Template for standalone books
+  final String seriesPath;  // Template for books in a series
+  
+  factory PathTemplate.initial();  // Default template
+}
+```
+
+### PathPlaceholders
+
+Enum defining available placeholders for path templates.
+
+```dart
+enum PathPlaceholders {
+  name('Название'),           // Book title
+  series('Серия'),            // Series name
+  seriesNumber('Номер в серии'),  // Number in series
+  authors('Авторы'),          // Authors list
+  portal('Портал');           // Portal name
+  
+  // Resolve placeholder value for a book
+  String resolve(Book data, String authorsSeparator);
+}
+```
+
+### TemplateFormatter
+
+Utility class for rendering path templates with book data.
+
+```dart
+class TemplateFormatter {
+  // Special brackets used for placeholders
+  static const String startTagChar = '⦘';  // U+2998
+  static const String endTagChar = '⦗';    // U+2997
+  
+  // Build filename from template and book data
+  static String buildTemplateFileName(Book data, SettingsService settings)
+  
+  // Render template with book data
+  static String renderTemplate(
+    String template,
+    Book data,
+    SettingsService settings,
+  )
+}
+```
+
+**Example template usage:**
+
+```dart
+// Template: "⦘Авторы⦗/⦘Серия⦗ — ⦘Номер в серии⦗"
+// Result: "John Doe/Fantasy Series — 3"
+
+final filename = TemplateFormatter.buildTemplateFileName(book, settings);
+// Illegal filename characters are replaced with underscores
+```
+
+## Persistence
+
+All services use Sembast for NoSQL persistence:
+
+- Settings are stored in a local database
+- Portal configurations are persisted per portal code
+- Recent books are stored with timestamps
+- Changes are automatically saved to disk
+
+The storage implementation is abstracted behind interfaces, allowing for alternative storage backends if needed.

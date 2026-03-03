@@ -1,0 +1,158 @@
+---
+title: Book
+description: Model representing a book with metadata, chapters, and portal information
+---
+
+The `Book` class represents a book entity in the ReUCM system, containing all metadata, chapter information, and a reference to the source portal.
+
+## Class definition
+
+```dart
+class Book {
+  final String id;
+  final String url;
+  final String title;
+  final List<Author> authors;
+  final String? annotation;
+  final bool isFinished;
+  final DateTime lastUpdateTime;
+  final String? coverUrl;
+  final List<Genre> genres;
+  final Series? series;
+  final List<String>? tags;
+  final int? textLength;
+  final List<Chapter> chapters = [];
+  final Portal portal;
+
+  Book({
+    required this.id,
+    required this.url,
+    required this.title,
+    required this.authors,
+    this.annotation,
+    required this.isFinished,
+    required this.lastUpdateTime,
+    this.coverUrl,
+    required this.genres,
+    this.series,
+    this.tags,
+    this.textLength,
+    required this.portal,
+  });
+}
+```
+
+## Properties
+
+<ParamField path="id" type="String" required>
+  Unique identifier for the book within the portal.
+</ParamField>
+
+<ParamField path="url" type="String" required>
+  The URL where the book can be accessed on the portal.
+</ParamField>
+
+<ParamField path="title" type="String" required>
+  The title of the book.
+</ParamField>
+
+<ParamField path="authors" type="List<Author>" required>
+  List of authors who wrote the book.
+</ParamField>
+
+<ParamField path="annotation" type="String?">
+  Optional description or summary of the book.
+</ParamField>
+
+<ParamField path="isFinished" type="bool" required>
+  Indicates whether the book is complete or still being written.
+</ParamField>
+
+<ParamField path="lastUpdateTime" type="DateTime" required>
+  The timestamp of the last update to the book.
+</ParamField>
+
+<ParamField path="coverUrl" type="String?">
+  Optional URL to the book's cover image.
+</ParamField>
+
+<ParamField path="genres" type="List<Genre>" required>
+  List of genres associated with the book.
+</ParamField>
+
+<ParamField path="series" type="Series?">
+  Optional series information if the book is part of a series.
+</ParamField>
+
+<ParamField path="tags" type="List<String>?">
+  Optional list of tags or keywords associated with the book.
+</ParamField>
+
+<ParamField path="textLength" type="int?">
+  Optional total length of the book text in characters or words.
+</ParamField>
+
+<ParamField path="chapters" type="List<Chapter>" required>
+  List of chapters in the book. Initialized as an empty list.
+</ParamField>
+
+<ParamField path="portal" type="Portal" required>
+  Reference to the portal from which this book originates.
+</ParamField>
+
+## Constructor
+
+```dart
+Book({
+  required String id,
+  required String url,
+  required String title,
+  required List<Author> authors,
+  String? annotation,
+  required bool isFinished,
+  required DateTime lastUpdateTime,
+  String? coverUrl,
+  required List<Genre> genres,
+  Series? series,
+  List<String>? tags,
+  int? textLength,
+  required Portal portal,
+})
+```
+
+Creates a new `Book` instance with the provided metadata.
+
+## Usage example
+
+```dart
+final book = Book(
+  id: '12345',
+  url: 'https://example.com/books/12345',
+  title: 'The Example Book',
+  authors: [
+    Author(name: 'John Doe', url: 'https://example.com/authors/johndoe'),
+  ],
+  annotation: 'An example book demonstrating the Book model.',
+  isFinished: true,
+  lastUpdateTime: DateTime(2024, 3, 15),
+  coverUrl: 'https://example.com/covers/12345.jpg',
+  genres: [
+    Genre(name: 'Fiction'),
+    Genre(name: 'Adventure'),
+  ],
+  series: Series(name: 'Example Series', number: 1),
+  tags: ['adventure', 'example'],
+  textLength: 150000,
+  portal: myPortal,
+);
+
+// Add chapters to the book
+book.chapters.add(Chapter(
+  title: 'Chapter 1: The Beginning',
+  content: 'Once upon a time...',
+));
+
+print('Book: ${book.title} by ${book.authors.first.name}');
+print('Status: ${book.isFinished ? "Complete" : "In Progress"}');
+print('Chapters: ${book.chapters.length}');
+```

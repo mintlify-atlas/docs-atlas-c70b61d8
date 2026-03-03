@@ -1,0 +1,166 @@
+---
+title: Installation guide
+description: Step-by-step instructions for installing ReUCM on Windows, Android, and iOS platforms
+---
+
+# Installation guide
+
+ReUCM is available for Windows, Android, and iOS. Choose your platform below for installation instructions.
+
+## Windows installation
+
+<Steps>
+  <Step title="Check system requirements">
+    Ensure your system meets the minimum requirements:
+    - Windows 10 (version 1803) or higher
+    - Microsoft Edge and WebView2 installed (not removed)
+    
+    <Info>
+      Most modern Windows 10 and Windows 11 installations include WebView2 by default.
+    </Info>
+  </Step>
+
+  <Step title="Download the installer">
+    Download the latest Windows installer from the [GitHub Releases page](https://github.com/BooksFine/re_ucm/releases):
+    
+    - **ReUCM_windows.exe** - Standard installer (recommended)
+    - **ReUCM_windows_portable.7z** - Portable version (no installation required)
+  </Step>
+
+  <Step title="Run the installer">
+    For the standard installer:
+    1. Double-click `ReUCM_windows.exe`
+    2. Follow the installation wizard
+    3. Choose installation directory (default: `C:\Program Files\ReUCM`)
+    4. Click "Install"
+    
+    For the portable version:
+    1. Extract `ReUCM_windows_portable.7z` using 7-Zip or WinRAR
+    2. Run `re_ucm.exe` from the extracted folder
+  </Step>
+
+  <Step title="Launch ReUCM">
+    - Standard installation: Launch from Start Menu or desktop shortcut
+    - Portable version: Run `re_ucm.exe` directly from the extracted folder
+  </Step>
+</Steps>
+
+<Warning>
+  If Windows SmartScreen blocks the installer, click "More info" and then "Run anyway". This happens because the application is not signed with a commercial code signing certificate.
+</Warning>
+
+## Android installation
+
+<Steps>
+  <Step title="Enable installation from unknown sources">
+    Before installing, you need to allow installation from unknown sources:
+    
+    1. Open **Settings** on your Android device
+    2. Navigate to **Security** or **Privacy**
+    3. Enable **Install unknown apps** for your browser or file manager
+    
+    <Note>
+      On Android 8.0+, you grant this permission per-app rather than globally.
+    </Note>
+  </Step>
+
+  <Step title="Download the APK">
+    Download the latest Android APK from the [GitHub Releases page](https://github.com/BooksFine/re_ucm/releases):
+    
+    - **ReUCM_android.apk** - Universal APK (works on all devices)
+    - **ReUCM_android_arm64-v8a.apk** - Optimized for 64-bit ARM devices (recommended for modern phones)
+    - **ReUCM_android_armeabi-v7a.apk** - For older 32-bit ARM devices
+    - **ReUCM_android_x86_64.apk** - For x86_64 devices (emulators, tablets)
+    
+    <Info>
+      Choose the ARM64 version for best performance on modern devices. Use the universal APK if you're unsure.
+    </Info>
+  </Step>
+
+  <Step title="Install the APK">
+    1. Open your device's file manager or Downloads folder
+    2. Tap the downloaded APK file
+    3. Tap "Install" when prompted
+    4. Wait for installation to complete
+  </Step>
+
+  <Step title="Grant permissions">
+    When you first launch ReUCM, grant the following permissions:
+    
+    - **Storage** - Required to save downloaded books
+    - **Internet** - Required to access book resources
+    
+    <Note>
+      Share menu integration works automatically once installed - no additional configuration needed.
+    </Note>
+  </Step>
+</Steps>
+
+## iOS installation
+
+<Warning>
+  iOS installation requires TestFlight or manual building from source, as ReUCM is not currently available on the App Store.
+</Warning>
+
+<Steps>
+  <Step title="Join TestFlight (if available)">
+    If a TestFlight beta is available:
+    
+    1. Install [TestFlight](https://apps.apple.com/app/testflight/id899247664) from the App Store
+    2. Open the TestFlight invitation link (check the [GitHub repository](https://github.com/BooksFine/re_ucm) or BooksFine Telegram channel)
+    3. Tap "Accept" to join the beta
+    4. Tap "Install" to download ReUCM
+  </Step>
+
+  <Step title="Build from source (alternative)">
+    If TestFlight is not available, you can build the app yourself:
+    
+    1. Clone the repository: `git clone https://github.com/BooksFine/re_ucm.git`
+    2. Install Flutter 3.29.3 or higher
+    3. Navigate to `re_ucm_app` directory
+    4. Run `flutter pub get`
+    5. Run `dart run build_runner build --delete-conflicting-outputs`
+    6. Connect your iOS device
+    7. Run `flutter run --release`
+    
+    <Info>
+      You'll need a Mac with Xcode and an Apple Developer account for iOS development.
+    </Info>
+  </Step>
+</Steps>
+
+## Verify installation
+
+After installation, verify ReUCM is working correctly:
+
+1. Launch the application
+2. You should see the main screen with available portals (e.g., Author.Today)
+3. Check for updates in the settings menu
+
+<Info>
+  ReUCM includes automatic OTA (over-the-air) updates. When a new version is available, you'll see a notification with the option to update.
+</Info>
+
+## Troubleshooting
+
+### Windows: Application won't start
+
+- Ensure WebView2 is installed. Download it from [Microsoft's website](https://developer.microsoft.com/microsoft-edge/webview2/)
+- Try running as administrator
+- Check Windows Event Viewer for error details
+
+### Android: Installation blocked
+
+- Verify you've enabled "Install unknown apps" for your browser/file manager
+- Try downloading again - the file may be corrupted
+- Disable Play Protect temporarily during installation
+
+### Storage permissions denied
+
+- Go to Settings → Apps → ReUCM → Permissions
+- Enable Storage/Files permission manually
+- Restart the app
+
+## Next steps
+
+Now that ReUCM is installed, proceed to the [quick start guide](/quickstart) to download your first book.

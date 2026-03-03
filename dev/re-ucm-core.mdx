@@ -1,0 +1,237 @@
+---
+title: re_ucm_core
+description: Core library containing data models, interfaces, and shared utilities for the ReUCM project
+---
+
+## Overview
+
+The `re_ucm_core` library is the foundation of the ReUCM project, providing essential data models, interfaces, and utilities that are shared across all other packages. This library contains no platform-specific dependencies and can be used in any Dart environment.
+
+**Version:** 1.8.0
+
+**Repository:** https://github.com/BooksFine/re_ucm_core
+
+## Exports
+
+The library exports the following modules:
+
+- `models/book.dart` - Book-related data models
+- `models/portal.dart` - Portal interfaces and definitions
+- `models/progress.dart` - Download progress tracking
+- `logger.dart` - Logging utilities
+
+## Core models
+
+### Book
+
+The `Book` class represents a book from any portal with all its metadata.
+
+```dart
+class Book {
+  final String id;
+  final String url;
+  final String title;
+  final List<Author> authors;
+  final String? annotation;
+  final bool isFinished;
+  final DateTime lastUpdateTime;
+  final String? coverUrl;
+  final List<Genre> genres;
+  final Series? series;
+  final List<String>? tags;
+  final int? textLength;
+  final List<Chapter> chapters;
+  final Portal portal;
+}
+```
+
+**Key properties:**
+
+- `id` - Unique identifier within the portal
+- `url` - Full URL to the book on the portal
+- `portal` - Reference to the portal this book belongs to
+- `chapters` - List of book chapters (populated during download)
+- `series` - Optional series information if the book is part of a series
+
+### Author
+
+Represents a book author with name and optional profile URL.
+
+```dart
+class Author {
+  final String name;
+  final String? url;
+}
+```
+
+### Chapter
+
+Represents a single chapter of a book with title and HTML content.
+
+```dart
+class Chapter {
+  String title;
+  String content;
+}
+```
+
+### Genre
+
+Represents a book genre. Defined as part of the book model library.
+
+### Series
+
+Represents a book series with name and book number within the series.
+
+## Portal system
+
+### Portal interface
+
+The `Portal` interface defines how book portals are implemented. Each portal must provide information about itself and a service for fetching books.
+
+```dart
+abstract interface class Portal<T extends PortalSettings> {
+  String get url;
+  String get name;
+  String get code;
+  PortalLogo get logo;
+  PortalService<T> get service;
+}
+```
+
+**Properties:**
+
+- `url` - Base URL of the portal (e.g., "https://author.today")
+- `name` - Display name of the portal
+- `code` - Unique identifier code for the portal
+- `logo` - Portal logo asset information
+- `service` - Service implementation for fetching book data
+
+### PortalService interface
+
+Defines the contract for portal service implementations.
+
+```dart
+abstract interface class PortalService<T extends PortalSettings> {
+  T settingsFromJson(Map<String, dynamic>? json);
+  List<PortalSettingItem> buildSettingsSchema(T settings);
+  bool isAuthorized(T settings);
+  String getIdFromUrl(Uri url);
+  void Function(T updatedSettings)? onSettingsChanged;
+  Future<Book> getBookFromId(String id, {required T settings});
+  Future<List<Chapter>> getTextFromId(String id, {required T settings});
+}
+```
+
+**Key methods:**
+
+- `getBookFromId()` - Fetch book metadata from portal
+- `getTextFromId()` - Fetch all chapter content for a book
+- `isAuthorized()` - Check if the current settings include valid authentication
+- `buildSettingsSchema()` - Build UI schema for portal configuration
+
+### PortalSettings
+
+Base class for portal-specific settings.
+
+```dart
+abstract class PortalSettings {
+  Map<String, dynamic> toMap();
+}
+```
+
+Each portal implementation extends this class to store portal-specific configuration like authentication tokens, API keys, or user preferences.
+
+### Portal setting items
+
+The library provides several setting item types for building portal configuration UIs:
+
+- `PortalSettingStateSwitcher` - Conditional settings based on state
+- `PortalSettingGroup` - Group multiple settings together
+- `PortalSettingSectionTitle` - Section header
+- `PortalSettingActionButton` - Clickable action button
+- `PortalSettingTextField` - Text input field
+- `PortalSettingWebAuthButton` - Web-based authentication flow
+
+## Progress tracking
+
+The `Progress` class tracks download and conversion progress.
+
+```dart
+class Progress {
+  var stage = Stages.none;
+  int? current;
+  int? total;
+  String? message;
+}
+```
+
+**Stages:**
+
+```dart
+enum Stages {
+  none,
+  downloading,
+  decrypting,
+  analyzing,
+  imageDownloading,
+  building,
+  ziping,
+  done,
+  error,
+}
+```
+
+This allows tracking multi-stage operations like downloading chapters, processing images, and building the final book file.
+
+## Logger
+
+The library provides a pre-configured logger instance:
+
+```dart
+final logger = Logger(level: Level.all, printer: PrettyPrinter());
+```
+
+This logger is available throughout the application for consistent logging.
+
+## Usage example
+
+Implementing a custom portal:
+
+```dart
+import 'package:re_ucm_core/re_ucm_core.dart';
+
+class MyPortalSettings extends PortalSettings {
+  final String? apiKey;
+  
+  MyPortalSettings({this.apiKey});
+  
+  @override
+  Map<String, dynamic> toMap() => {'apiKey': apiKey};
+}
+
+class MyPortalService implements PortalService<MyPortalSettings> {
+  @override
+  Future<Book> getBookFromId(String id, {required MyPortalSettings settings}) async {
+    // Fetch book from your portal API
+    return Book(
+      id: id,
+      url: 'https://myportal.com/books/$id',
+      title: 'Example Book',
+      authors: [Author(name: 'Example Author')],
+      isFinished: true,
+      lastUpdateTime: DateTime.now(),
+      genres: [],
+      portal: myPortalInstance,
+    );
+  }
+  
+  @override
+  Future<List<Chapter>> getTextFromId(String id, {required MyPortalSettings settings}) async {
+    // Fetch chapters from your portal API
+    return [];
+  }
+  
+  // Implement other required methods...
+}
+```

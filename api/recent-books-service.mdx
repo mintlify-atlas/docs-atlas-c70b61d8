@@ -1,0 +1,224 @@
+---
+title: RecentBooksService
+description: MobX-powered service for tracking and managing recently accessed books in ReUCM
+---
+
+The `RecentBooksService` maintains a list of recently accessed books with persistent storage. It uses MobX for reactive state management, making it easy to observe changes to the recent books list.
+
+## Initialization
+
+### init
+
+Initializes the recent books service with persistent storage.
+
+```dart
+static Future<RecentBooksService> init(String databaseDirectory)
+```
+
+<ParamField path="databaseDirectory" type="String" required>
+  The directory path where the recent books database files will be stored.
+</ParamField>
+
+<ResponseField name="return" type="Future<RecentBooksService>">
+  A fully initialized service instance with loaded recent books.
+</ResponseField>
+
+**Example:**
+
+```dart
+final recentBooksService = await RecentBooksService.init('/path/to/database');
+```
+
+## Properties
+
+<ResponseField name="recentBooks" type="ObservableList<RecentBook>">
+  An observable list of recently accessed books, sorted by the time they were added. This list is reactive and will trigger UI updates when modified.
+</ResponseField>
+
+## Methods
+
+### addRecentBook
+
+Adds a book to the recent books list. If the book already exists in the list, it removes the old entry and adds a new one with the current timestamp.
+
+```dart
+Future<void> addRecentBook(Book book)
+```
+
+<ParamField path="book" type="Book" required>
+  The book to add to the recent books list. The book's metadata will be extracted and stored as a RecentBook entry.
+</ParamField>
+
+The method creates a `RecentBook` entry containing:
+- Book ID and title
+- Comma-separated author names
+- Cover URL
+- Series name and number (if applicable)
+- Portal reference
+- Current timestamp
+
+**Example:**
+
+```dart
+final book = await portal.getBook('12345');
+await recentBooksService.addRecentBook(book);
+```
+
+### removeRecentBook
+
+Removes a book from the recent books list and deletes it from storage.
+
+```dart
+Future<void> removeRecentBook(RecentBook book)
+```
+
+<ParamField path="book" type="RecentBook" required>
+  The recent book entry to remove.
+</ParamField>
+
+Books are matched by a combination of portal code and book ID to ensure uniqueness across different portals.
+
+**Example:**
+
+```dart
+final bookToRemove = recentBooksService.recentBooks.first;
+await recentBooksService.removeRecentBook(bookToRemove);
+```
+
+### restoreRecentBook
+
+Restores a previously removed book back to the recent books list. This is useful for implementing undo functionality.
+
+```dart
+Future<void> restoreRecentBook(RecentBook book)
+```
+
+<ParamField path="book" type="RecentBook" required>
+  The recent book entry to restore.
+</ParamField>
+
+The book is added back to the list and the list is re-sorted by the `added` timestamp to maintain chronological order.
+
+**Example:**
+
+```dart
+// Remove a book but keep the reference
+final removedBook = recentBooksService.recentBooks[0];
+await recentBooksService.removeRecentBook(removedBook);
+
+// Later, restore it
+await recentBooksService.restoreRecentBook(removedBook);
+```
+
+## MobX integration
+
+The `RecentBooksService` extends a MobX store, making the `recentBooks` list observable. This enables automatic UI updates when books are added, removed, or restored.
+
+**Example with Flutter and MobX:**
+
+```dart
+import 'package:flutter_mobx/flutter_mobx.dart';
+
+class RecentBooksWidget extends StatelessWidget {
+  final RecentBooksService service;
+  
+  const RecentBooksWidget({required this.service});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Observer(
+      builder: (_) {
+        if (service.recentBooks.isEmpty) {
+          return Text('No recent books');
+        }
+        
+        return ListView.builder(
+          itemCount: service.recentBooks.length,
+          itemBuilder: (context, index) {
+            final book = service.recentBooks[index];
+            return ListTile(
+              title: Text(book.title),
+              subtitle: Text(book.authors),
+              leading: Image.network(book.coverUrl),
+              trailing: IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () => service.removeRecentBook(book),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+## Usage
+
+**Basic usage:**
+
+```dart
+import 'package:re_ucm_lib/recent_books/recent_books_service.cg.dart';
+
+Future<void> main() async {
+  // Initialize the service
+  final recentBooks = await RecentBooksService.init('/path/to/database');
+  
+  // Add a book when user views it
+  final portal = PortalFactory.fromCode('flibust');
+  final book = await portal.service.getBook('12345');
+  await recentBooks.addRecentBook(book);
+  
+  // Display recent books
+  for (final recent in recentBooks.recentBooks) {
+    print('${recent.title} by ${recent.authors}');
+    if (recent.seriesName != null) {
+      print('  Series: ${recent.seriesName} #${recent.seriesNumber}');
+    }
+  }
+  
+  // Remove a book
+  await recentBooks.removeRecentBook(recentBooks.recentBooks.first);
+}
+```
+
+**Undo/redo pattern:**
+
+```dart
+class RecentBooksManager {
+  final RecentBooksService service;
+  final List<RecentBook> _deletedBooks = [];
+  
+  RecentBooksManager(this.service);
+  
+  Future<void> deleteWithUndo(RecentBook book) async {
+    await service.removeRecentBook(book);
+    _deletedBooks.add(book);
+    
+    // Show snackbar with undo option
+    showSnackBar(
+      'Book removed',
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () => undoDelete(),
+      ),
+    );
+  }
+  
+  Future<void> undoDelete() async {
+    if (_deletedBooks.isNotEmpty) {
+      final book = _deletedBooks.removeLast();
+      await service.restoreRecentBook(book);
+    }
+  }
+}
+```
+
+## Data persistence
+
+The service automatically persists all changes to the database:
+- `addRecentBook`: Saves the new entry to storage
+- `removeRecentBook`: Deletes the entry from storage
+- `restoreRecentBook`: Re-saves the entry to storage
+
+All recent books are loaded from storage during initialization, ensuring data persists across app restarts.

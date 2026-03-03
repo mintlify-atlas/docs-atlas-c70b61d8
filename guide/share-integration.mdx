@@ -1,0 +1,138 @@
+---
+title: Share menu integration
+description: Open books in ReUCM directly from your browser using Android's share functionality
+---
+
+ReUCM integrates with Android's share system, allowing you to send book URLs from any app directly to ReUCM for downloading.
+
+## How it works
+
+When you share a supported book URL to ReUCM, the app:
+
+1. Extracts the URL from the shared content
+2. Identifies which portal the book belongs to
+3. Extracts the book ID from the URL
+4. Opens the book page automatically in ReUCM
+
+<Note>
+This feature is only available on Android devices. Share integration is not supported on other platforms.
+</Note>
+
+## Using share integration
+
+<Steps>
+  <Step title="Find a book URL">
+    In your mobile browser or any app, navigate to a book page on a supported portal.
+  </Step>
+  
+  <Step title="Open share menu">
+    Tap your browser's share button or use the system share functionality.
+  </Step>
+  
+  <Step title="Select ReUCM">
+    From the share sheet, select ReUCM as the destination app.
+  </Step>
+  
+  <Step title="View book in ReUCM">
+    ReUCM opens automatically and navigates directly to the book page, displaying metadata and download options.
+  </Step>
+</Steps>
+
+## Share on app launch
+
+ReUCM checks for shared content when the app launches:
+
+- If you shared a book URL to ReUCM while the app was closed, the app opens and immediately navigates to the book page
+- This happens automatically without any additional taps or navigation
+
+## Supported content types
+
+The share integration accepts:
+
+- **Direct book URLs**: URLs pointing to specific book pages on supported portals
+- **Text containing URLs**: If you share text that contains a book URL, ReUCM extracts and processes it
+
+## Error handling
+
+If something goes wrong during the share process:
+
+### Invalid URL
+
+If the shared URL is not from a supported portal or doesn't contain a valid book ID:
+
+- An error message appears explaining the issue
+- You remain on the current page in ReUCM
+
+### Unsupported portal
+
+If the URL is from a book portal that ReUCM doesn't support:
+
+- An error notification displays
+- The URL is not processed
+
+<Warning>
+Make sure you're sharing a direct book page URL, not the portal's homepage or search results page. The URL must contain a specific book identifier.
+</Warning>
+
+## Example workflow
+
+Here's a typical scenario for using share integration:
+
+<Steps>
+  <Step title="Discover a book">
+    You're browsing a book portal in Chrome on your Android phone and find an interesting book.
+  </Step>
+  
+  <Step title="Share to ReUCM">
+    Instead of copying the URL and switching to ReUCM, you tap Chrome's share button and select ReUCM.
+  </Step>
+  
+  <Step title="Automatic processing">
+    ReUCM opens, processes the URL, and shows the book page with all metadata loaded.
+  </Step>
+  
+  <Step title="Download immediately">
+    You can immediately tap the download button without any manual navigation or URL pasting.
+  </Step>
+</Steps>
+
+## Advantages over manual URL entry
+
+Share integration offers several benefits:
+
+- **Faster workflow**: No need to copy and paste URLs
+- **Fewer errors**: Eliminates typos from manual entry
+- **Context preservation**: You can continue browsing in your browser while ReUCM processes the book
+- **Seamless experience**: Direct deep-linking to the book page
+
+## Troubleshooting
+
+If share integration isn't working:
+
+### ReUCM doesn't appear in share menu
+
+- Make sure you're on an Android device (share integration is Android-only)
+- Verify you're sharing a URL or text content
+- Try restarting the app
+
+### Error message after sharing
+
+Common error scenarios:
+
+- **"Ошибка при открытии книги" (Error opening book)**: The URL format is not recognized
+  - Verify the URL is from a supported portal
+  - Ensure the URL points to a specific book page
+  - Check that the URL contains a valid book identifier
+
+<Tip>
+If you frequently download books from the same portal, consider using the [built-in browser](/guide/browser) for an even more integrated experience with automatic book detection.
+</Tip>
+
+## Privacy and permissions
+
+Share integration:
+
+- Only processes URLs and text shared explicitly by you
+- Does not access your clipboard automatically
+- Does not monitor or intercept shares to other apps
+- Only activates when you explicitly select ReUCM from the share menu

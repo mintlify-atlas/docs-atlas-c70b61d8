@@ -1,0 +1,307 @@
+---
+title: Portal interface
+description: Complete reference for the Portal and PortalService interfaces in ReUCM
+---
+
+The `Portal` and `PortalService` interfaces define the contract that all book source modules must implement in ReUCM.
+
+## Portal interface
+
+The `Portal` interface defines the basic metadata and properties of a book source.
+
+**Source:** `re_ucm_core/lib/models/portal/portal.dart:3-9`
+
+```dart
+abstract interface class Portal<T extends PortalSettings> {
+  String get url;
+  String get name;
+  String get code;
+  PortalLogo get logo;
+  PortalService<T> get service;
+}
+```
+
+### Properties
+
+<ParamField path="url" type="String" required>
+  The base URL of the portal website (e.g., `"https://author.today"`). Used for URL matching and relative path resolution.
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  The human-readable name of the portal (e.g., `"Author.Today"`). Displayed in the UI.
+</ParamField>
+
+<ParamField path="code" type="String" required>
+  A unique identifier for the portal (e.g., `"at"` for Author.Today). Used for portal registration and identification. Must be unique across all portals.
+</ParamField>
+
+<ParamField path="logo" type="PortalLogo" required>
+  The portal's logo configuration, including the asset path and package name.
+</ParamField>
+
+<ParamField path="service" type="PortalService<T>" required>
+  The service implementation that handles authentication, book fetching, and other portal-specific operations.
+</ParamField>
+
+### PortalLogo class
+
+**Source:** `re_ucm_core/lib/models/portal/portal.dart:11-16`
+
+```dart
+final class PortalLogo {
+  const PortalLogo({required this.assetPath, this.packageName});
+
+  final String assetPath;
+  final String? packageName;
+}
+```
+
+<ParamField path="assetPath" type="String" required>
+  The path to the logo asset file (e.g., `"assets/logo.svg"`).
+</ParamField>
+
+<ParamField path="packageName" type="String?">
+  The package name where the asset is located (e.g., `"re_ucm_author_today"`). Required for assets in portal packages.
+</ParamField>
+
+## PortalService interface
+
+The `PortalService` interface defines the core functionality for interacting with a book source.
+
+**Source:** `re_ucm_core/lib/models/portal/portal_service.dart:3-17`
+
+```dart
+abstract interface class PortalService<T extends PortalSettings> {
+  T settingsFromJson(Map<String, dynamic>? json);
+
+  List<PortalSettingItem> buildSettingsSchema(T settings);
+
+  bool isAuthorized(T settings);
+
+  String getIdFromUrl(Uri url);
+
+  void Function(T updatedSettings)? onSettingsChanged;
+
+  Future<Book> getBookFromId(String id, {required T settings});
+
+  Future<List<Chapter>> getTextFromId(String id, {required T settings});
+}
+```
+
+### Methods
+
+<ParamField path="settingsFromJson" type="T settingsFromJson(Map<String, dynamic>? json)" required>
+  Deserializes portal settings from JSON. Returns a default settings object if `json` is null.
+
+  **Parameters:**
+  - `json`: The JSON data to deserialize, or null for default settings
+
+  **Returns:** A portal settings object of type `T`
+</ParamField>
+
+<ParamField path="buildSettingsSchema" type="List<PortalSettingItem> buildSettingsSchema(T settings)" required>
+  Builds the UI schema for the portal's settings page. Returns a list of setting items that define the authentication UI and configuration options.
+
+  **Parameters:**
+  - `settings`: The current portal settings
+
+  **Returns:** A list of `PortalSettingItem` objects that define the settings UI
+
+  Available setting item types:
+  - `PortalSettingSectionTitle` - Section header
+  - `PortalSettingWebAuthButton` - Web-based authentication button
+  - `PortalSettingTextField` - Text input field
+  - `PortalSettingActionButton` - Action button (e.g., logout)
+  - `PortalSettingStateSwitcher` - Conditional UI based on state
+  - `PortalSettingGroup` - Group of settings
+</ParamField>
+
+<ParamField path="isAuthorized" type="bool isAuthorized(T settings)" required>
+  Checks if the user is authorized with the portal.
+
+  **Parameters:**
+  - `settings`: The current portal settings
+
+  **Returns:** `true` if the user is authenticated, `false` otherwise
+</ParamField>
+
+<ParamField path="getIdFromUrl" type="String getIdFromUrl(Uri url)" required>
+  Extracts the book ID from a portal URL.
+
+  **Parameters:**
+  - `url`: The book URL (e.g., `https://author.today/work/12345`)
+
+  **Returns:** The book ID as a string (e.g., `"12345"`)
+
+  **Throws:** `ArgumentError` if the URL is invalid or doesn't match the portal's format
+</ParamField>
+
+<ParamField path="onSettingsChanged" type="void Function(T updatedSettings)?">
+  Optional callback that can be invoked when settings need to be updated (e.g., after token refresh). The app will persist the updated settings automatically.
+
+  **Example:**
+  ```dart
+  // In token refresh logic
+  if (newToken != null) {
+    onSettingsChanged?.call(settings.copyWith(token: newToken));
+  }
+  ```
+</ParamField>
+
+<ParamField path="getBookFromId" type="Future<Book> getBookFromId(String id, {required T settings})" required>
+  Fetches book metadata from the portal.
+
+  **Parameters:**
+  - `id`: The book ID
+  - `settings`: The current portal settings (for authentication)
+
+  **Returns:** A `Book` object containing metadata (title, authors, chapters list, cover, etc.)
+
+  **Throws:** Exception if the book is not found or authentication fails
+</ParamField>
+
+<ParamField path="getTextFromId" type="Future<List<Chapter>> getTextFromId(String id, {required T settings})" required>
+  Fetches all chapters of a book from the portal.
+
+  **Parameters:**
+  - `id`: The book ID
+  - `settings`: The current portal settings (for authentication)
+
+  **Returns:** A list of `Chapter` objects with titles and content
+
+  **Throws:** Exception if the chapters cannot be fetched or authentication fails
+</ParamField>
+
+## Implementation example
+
+Here's how the Author.Today portal implements these interfaces:
+
+**Source:** `re_ucm_author_today/lib/re_ucm_author_today.dart`
+
+```dart
+class AuthorToday implements Portal<ATSettings> {
+  late final PortalService<ATSettings> _service = AuthorTodayService(this);
+
+  @override
+  String get code => 'at';
+
+  @override
+  String get name => 'Author.Today';
+
+  @override
+  String get url => 'https://author.today';
+
+  @override
+  PortalLogo get logo => PortalLogo(
+    assetPath: 'assets/logo.svg',
+    packageName: 're_ucm_author_today',
+  );
+
+  @override
+  PortalService<ATSettings> get service => _service;
+}
+```
+
+**Source:** `re_ucm_author_today/lib/author_today_service.dart:11-17`
+
+```dart
+class AuthorTodayService implements PortalService<ATSettings> {
+  AuthorTodayService(this.portal);
+  final Portal portal;
+
+  @override
+  void Function(ATSettings updatedSettings)? onSettingsChanged;
+
+  @override
+  ATSettings settingsFromJson(Map<String, dynamic>? json) =>
+      json == null ? ATSettings() : ATSettings.fromJson(json);
+
+  @override
+  bool isAuthorized(ATSettings settings) => settings.token != null;
+
+  @override
+  String getIdFromUrl(Uri url) {
+    if (url.host != 'author.today' ||
+        url.pathSegments.length != 2 ||
+        !['work', 'reader'].contains(url.pathSegments[0])) {
+      throw ArgumentError('Invalid link');
+    }
+    return url.pathSegments[1];
+  }
+
+  @override
+  Future<Book> getBookFromId(String id, {required ATSettings settings}) async {
+    final api = AuthorTodayAPI.create(token: settings.token);
+    final res = await api.getMeta(id);
+    return metadataParserAT(res.data, portal);
+  }
+
+  @override
+  Future<List<Chapter>> getTextFromId(
+    String id, {
+    required ATSettings settings,
+  }) async {
+    final api = AuthorTodayAPI.create(token: settings.token);
+    final res = await api.getManyTexts(id);
+    return Future.wait(
+      res.data.map((chapter) => _createChapter(chapter, settings.userId)),
+    );
+  }
+}
+```
+
+## Settings schema example
+
+Here's how Author.Today builds its settings UI schema:
+
+**Source:** `re_ucm_author_today/lib/author_today_service.dart:28-74`
+
+```dart
+@override
+List<PortalSettingItem> buildSettingsSchema(ATSettings settings) {
+  return [
+    const PortalSettingSectionTitle('Author.Today'),
+    PortalSettingStateSwitcher<bool>(
+      currentState: isAuthorized(settings),
+      states: {
+        true: PortalSettingActionButton(
+          actionId: 'logout',
+          title: 'Sign out',
+          subtitle: settings.userId == null
+              ? null
+              : 'Logged in as id${settings.userId}',
+          onTap: (s) => _logout(s as ATSettings),
+        ),
+        false: PortalSettingGroup([
+          PortalSettingWebAuthButton(
+            actionId: 'login_by_web',
+            title: 'Sign in via web',
+            startUrl: 'https://author.today/account/login',
+            successUrl: 'https://author.today/',
+            cookieName: 'LoginCookie',
+            onCookieObtained: (s, cookie) =>
+                _loginByCookie(s as ATSettings, cookie),
+          ),
+          PortalSettingTextField(
+            actionId: 'login_by_token',
+            title: 'Sign in with token',
+            hint: 'Paste your token',
+            onSubmit: (s, v) => _loginByToken(s as ATSettings, v),
+          ),
+        ]),
+      },
+    ),
+  ];
+}
+```
+
+This creates a settings UI that:
+- Shows a "Sign out" button when authenticated
+- Shows web auth and token auth options when not authenticated
+- Displays the user ID when logged in
+
+## Next steps
+
+- Learn how to [create a new portal](/dev/creating-portal)
+- Explore the [portal system architecture](/dev/portal-system)
+- Review the [Book](/api/book) and [Chapter](/api/chapter) model documentation
