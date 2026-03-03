@@ -1,0 +1,109 @@
+{
+  "projectType": "saas",
+  "projectName": "ReUCM",
+  "projectDescription": "Cross-platform book downloader from various resources with built-in browser and OTA updates",
+  "theme": "palm",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "installation", "quickstart"]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guide/downloading-books",
+              "guide/browser",
+              "guide/share-integration",
+              "guide/settings"
+            ]
+          },
+          {
+            "group": "Supported Resources",
+            "pages": ["resources/overview", "resources/author-today"]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "dev/architecture",
+              "dev/monorepo-structure",
+              "dev/portal-system"
+            ]
+          },
+          {
+            "group": "Building Modules",
+            "pages": [
+              "dev/creating-portal",
+              "dev/portal-interface",
+              "dev/converters"
+            ]
+          },
+          {
+            "group": "Core Libraries",
+            "pages": [
+              "dev/re-ucm-core",
+              "dev/re-ucm-lib",
+              "dev/re-ucm-app"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": ["dev/setup", "dev/contributing"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core Models",
+            "pages": [
+              "api/portal",
+              "api/portal-service",
+              "api/book",
+              "api/chapter"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "api/portal-factory",
+              "api/settings-service",
+              "api/recent-books-service"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Download purchased and free books with download restrictions",
+    "Built-in browser for authentication and book access",
+    "Share menu integration for quick book opening",
+    "OTA (Over-The-Air) updates",
+    "FB2 format export",
+    "Modular portal system for adding new book sources",
+    "Cross-platform support (Windows, Android, iOS)"
+  ],
+  "publicApiSurface": [
+    "Portal interface",
+    "PortalService interface",
+    "PortalFactory.registerPortal()",
+    "Book model",
+    "Chapter model",
+    "SettingsService",
+    "RecentBooksService",
+    "FB2Converter"
+  ]
+}
